@@ -1,6 +1,6 @@
 import importlib
 import os
-from typing import TypeVar
+from typing import Callable
 
 from langchain_core.tools.structured import StructuredTool
 
@@ -8,18 +8,31 @@ from agent import Agent
 from logger import logger
 
 
-def load_agents() -> dict[str, Agent]:
-    return load_objects(Agent, "agents")
+def load_agents() -> dict[str, type[Agent]]:
+    return load_objects("agents", _filter_agents)  # type: ignore
 
 
 def load_tools() -> dict[str, StructuredTool]:
-    return load_objects(StructuredTool, "tools")
+    return load_objects("tools", _filter_tools)  # type: ignore
 
 
-T = TypeVar("T")
+def _filter_agents(value):
+    if not isinstance(value, type):
+        return False
+    if value is Agent:
+        return False
+    if not issubclass(value, Agent):
+        return False
+    return True
 
 
-def load_objects(object_type: type[T], dirname: str) -> dict[str, T]:
+def _filter_tools(value):
+    if not isinstance(value, StructuredTool):
+        return False
+    return True
+
+
+def load_objects(dirname: str, filter_func: Callable) -> dict[str, object]:
     objects = {}
     objects_dir = os.path.join(os.path.dirname(__file__), dirname)
     logger.info("Loading objects from directory: %s", objects_dir)
@@ -32,7 +45,7 @@ def load_objects(object_type: type[T], dirname: str) -> dict[str, T]:
         module_name = f"{dirname}.{module_name}"
         module = importlib.import_module(module_name)
         for key, value in vars(module).items():
-            if not isinstance(value, object_type):
+            if not filter_func(value):
                 continue
             objects[key] = value
             logger.info("Object loaded: %s", key)

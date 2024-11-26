@@ -7,7 +7,6 @@ from langchain_core.chat_history import (
     InMemoryChatMessageHistory,
 )
 from langchain_core.messages import HumanMessage
-from langchain_core.runnables import RunnableConfig
 from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain_openai import AzureChatOpenAI
 
@@ -34,9 +33,8 @@ class ChatGPT(Agent):
             self.store[session_id] = InMemoryChatMessageHistory()
         return self.store[session_id]
 
-    def message(self, input: str, *, session_id: str | None) -> Generator[str | gr.Image, None, None]:
-        config: RunnableConfig = {"configurable": {"session_id": session_id}}
-        response = self.chain.invoke([HumanMessage(content=input)], config=config)
+    def message(self, input: str) -> Generator[str | gr.Image, None, None]:
+        response = self.chain.invoke([HumanMessage(content=input)])
         yield response.content
 
 

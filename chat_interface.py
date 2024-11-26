@@ -5,13 +5,15 @@ import gradio as gr
 from agent import Agent
 
 
-def create(agent: Agent) -> gr.Blocks:
+def create(AgentImpl: type[Agent]) -> gr.Blocks:
+    agent = AgentImpl()
+
     def respond(prompt: str, history: list[dict[str, str]]) -> Generator[list[dict[str, str]], None, None]:
         user_message = {"role": "user", "content": prompt}
         history.append(user_message)
         yield history
 
-        for reply in agent.message(prompt, session_id="gradio"):
+        for reply in agent.message(prompt):
             assistant_message = {"role": "assistant", "content": reply}
             history.append(assistant_message)
             yield history

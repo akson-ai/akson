@@ -6,21 +6,18 @@ from fastapi import FastAPI
 from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 
 import chat_interface
-import openai_compat
 import registry
 from loader import load_agents
 
 load_dotenv()
 
-agents = load_agents()
+agent_classes = load_agents()
 
 app = FastAPI()
 
-openai_compat.setup_routes(app, agents)
-
-for agent in agents.values():
-    registry.register(agent)
-    gr.mount_gradio_app(app, chat_interface.create(agent), f"/agents/{agent.name}")
+for AgentClass in agent_classes.values():
+    registry.register(AgentClass)
+    gr.mount_gradio_app(app, chat_interface.create(AgentClass), f"/agents/{AgentClass.name}")
 
 
 @app.get("/")
@@ -41,7 +38,8 @@ async def get_agents():
             <body>
                 <h1>Agents</h1>
                 <ul>
-                {"".join([f"<li><a href='/agents/{agent.name}'>{agent.name}</a></li>" for agent in agents.values()])}
+                {"".join([f"<li><a href='/agents/{agent.name}'>{agent.name}</a></li>"
+                         for agent in agent_classes.values()])}
                 </ul>
             </body>
         </html>

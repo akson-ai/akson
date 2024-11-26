@@ -35,7 +35,7 @@ class Agent(ABC):
         return f"Agent<{self.name}>"
 
     @abstractmethod
-    def message(self, input: str, *, session_id: str | None) -> Generator[str | gr.Image, None, None]:
+    def message(self, input: str) -> Generator[str | gr.Image, None, None]:
         """Sends a message to the agent. Agents should remember previous messages."""
 
 
@@ -58,7 +58,7 @@ class SimpleAgent(Agent):
             ChatCompletionSystemMessageParam(role="system", content=self.prompt)
         ]
 
-    def message(self, input: str, *, session_id: str | None) -> Generator[str | gr.Image, None, None]:
+    def message(self, input: str) -> Generator[str | gr.Image, None, None]:
         completion = self._complete(ChatCompletionUserMessageParam(role="user", content=input))
         tool_calls = self.toolset.process_response(completion, agent=self.name)
         while tool_calls:

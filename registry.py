@@ -5,17 +5,17 @@ Global registry for agents.
 from agent import Agent
 
 # Global dictionary of registered agents.
-agents: dict[str, Agent] = {}
+agents: dict[str, type[Agent]] = {}
 
 
-def register(agent: Agent):
+def register(agent: type[Agent]):
     agents[agent.name] = agent
 
 
-def get(name: str) -> Agent:
+def get(name: str) -> type[Agent]:
     return agents[name]
 
 
-def list() -> list[Agent]:
+def list() -> list[type[Agent]]:
     """Returns a list of all registered agents that can be used by Planner agent."""
-    return [agent for agent in agents.values() if not agent.system]
+    return [agent for agent in agents.values()]
