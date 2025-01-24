@@ -4,9 +4,9 @@ WORKDIR /app
 # Install dependencies first
 RUN pip install --no-cache-dir pipx
 ENV PATH="$PATH:/root/.local/bin"
-RUN pipx install "poetry==1.8"
-COPY poetry.lock pyproject.toml ./
-RUN POETRY_VIRTUALENVS_CREATE=false poetry install
+RUN pipx install "pdm"
+COPY pdm.lock pyproject.toml ./
+RUN pdm install
 
 COPY . .
 EXPOSE 8000
