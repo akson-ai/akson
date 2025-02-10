@@ -1,216 +1,80 @@
 from framework import Agent, ConversationalAgent, SimpleAssistant
 
 # {{{ input
-company_name = """Uniquetech"""
+company_name = """WE're Architects"""
 
-job_title = """Plant Manager"""
+job_title = """Mimar"""
 
 job_description = """
-     # Plant Manager - Metal Machining Factory
+## WE’re Architects ekip arkadaşları arıyor!
+**Ref 02 – Mimar**
 
-## Position Overview
-We are seeking an experienced Plant Manager to oversee all operations at our metal machining facility. The ideal candidate will combine technical expertise in metal manufacturing with strong leadership abilities to drive operational excellence, ensure quality standards, and maintain a safe working environment.
+### Aranan Nitelikler:
+- Üniversitelerin mimarlık bölümünden mezun
+- En az **2 yıl** ofis deneyimi sahibi
+- Uygulama proje sürecinde görev almış
+- Disiplinler arası koordinasyon sağlayabilecek
+- Takım çalışmasına yatkın
+- Tam zamanlı çalışmaya müsait
+- Erkek adaylar için askerlik vazifesini tamamlamış olan
 
-## Key Responsibilities
+### Başvuru:
+Meslektaşlarımızı arıyoruz!  
+Başvurularınızı CV ve portfolyonuz ile birlikte **info@werearch.com** e-mail adresine gönderebilirsiniz.
 
-### Operations Management
-- Direct daily manufacturing operations, including CNC machining, metal fabrication, and assembly processes
-- Optimize production schedules and workflows to maximize efficiency and meet customer deadlines
-- Implement and maintain lean manufacturing principles and continuous improvement initiatives
-- Monitor and analyze production metrics, quality indicators, and operational KPIs
-- Develop and manage annual operating budgets and capital expenditure plans
-
-### Quality and Safety
-- Ensure compliance with ISO 9001 quality management systems and industry standards
-- Maintain OSHA safety standards and promote a zero-incident safety culture
-- Lead quality improvement initiatives and implement corrective actions as needed
-- Oversee preventive maintenance programs for all machinery and equipment
-- Ensure proper documentation of all quality and safety procedures
-
-### Team Leadership
-- Manage a team of 50-100 employees across multiple shifts
-- Recruit, train, and develop production supervisors and technical staff
-- Conduct regular performance evaluations and implement development plans
-- Foster a culture of accountability, innovation, and continuous learning
-- Address employee relations issues and maintain positive workforce morale
-
-### Strategic Planning
-- Collaborate with senior management to develop and execute business strategies
-- Identify opportunities for process improvements and cost reduction
-- Lead capacity planning initiatives and equipment acquisition projects
-- Develop contingency plans for potential operational disruptions
-- Drive innovation in manufacturing processes and technology adoption
-
-## Required Qualifications
-- Bachelor's degree in Manufacturing Engineering, Mechanical Engineering, or related field
-- 10+ years of progressive experience in manufacturing, with at least 5 years in a leadership role
-- Extensive knowledge of metal machining processes, CNC programming, and tooling
-- Strong understanding of lean manufacturing principles and Six Sigma methodologies
-- Proven track record of implementing operational improvements and cost reduction initiatives
-- Experience with ERP systems and production planning software
-- Excellent problem-solving and analytical skills
-- Outstanding leadership and communication abilities
-
-## Preferred Qualifications
-- Master's degree in Engineering or Business Administration
-- Professional certifications (PE, PMP, Six Sigma Black Belt)
-- Experience with automation and robotics integration
-- Knowledge of ISO 9001 and AS9100 quality management systems
-- Multilingual capabilities (Turkish/English required)
-
-## Physical Requirements
-- Ability to walk and stand for extended periods
-- Capability to access all areas of the manufacturing facility
-- Must be able to wear required PPE (safety glasses, steel-toe boots, hearing protection)
-- Occasional lifting up to 25 pounds
-
-## Working Conditions
-- Full-time position with occasional evening and weekend availability required
-- Climate-controlled manufacturing environment
-- Exposure to typical machine shop conditions (noise, metal chips, cutting fluids)
-- Travel up to 15% for vendor/customer visits and corporate meetings
-
-## Benefits
-- Competitive salary commensurate with experience
-- Comprehensive health, dental, and vision insurance
-- 401(k) with company match
-- Performance-based bonus program
-- Professional development and training opportunities
-- Paid time off and holidays
-- Life and disability insurance
-
-## Reports To
-Director of Manufacturing
-
-## Location
-Bursa, Turkey
-
-Qualified candidates should submit their resume, cover letter, and references to [email/application portal].
-
-Uniquetech is an Equal Opportunity Employer. All qualified applicants will receive consideration for employment without regard to race, color, religion, sex, sexual orientation, gender identity, national origin, disability, or veteran status.
 """
 
 resume = """
-# Ayhan Bestepe - CV
+     # Nisa Büyükmumcu
 
-## Contact Information
-- **Phone:** (555) 560 38 28
-- **Email:** ayhanbestepe@gmail.com
-- **Location:** Nilüfer - Bursa, Turkey
-- **Nationality:** Turkish
-- **Marital Status:** Married
-- **Driver’s License:** B
-
----
+## Personal Information
+- Born: September 30, 2000 in Konya, Turkey
+- Current Location: Üsküdar, Istanbul
+- Email: nisa.buyukmumcu@gmail.com
+- Phone: +90 505 943 66 45
 
 ## Education
-- **PhD in Advanced Technologies and Material Science**
-  Bursa Teknik Üniversitesi (GPA 4.00/4.00)
-  Thesis: Preparation and Electrochemical Performance Effects of Rare Earth Element-Doped NMC Cathode Materials in Lithium-Ion Batteries
+- **2019-2024**: Istanbul Technical University
+ - Department of Architecture
+ - 100% English Programme
+ - GPA: 3.024/4.00
 
-- **MSc in Automotive Engineering**
-  Boğaziçi Üniversitesi
-  Thesis: Performance Optimization of Lithium-Ion Batteries through Process Changes
-
-- **BA in Business Administration**
-  Anadolu Üniversitesi
-
-- **BSc in Mechanical Engineering**
-  Yeditepe Üniversitesi
-  Thesis: Design and Transmission Analysis of an Unmanned Hovercraft
-
-- **Exchange Student in Mechanical Engineering**
-  Vaxjö University, Sweden
-
----
-
-## Expertise
-- Powertrain Components, Lithium-Ion Batteries, Magnets, Electric Motors, Powder Metallurgy
-
----
-
-## Languages
-- **Turkish:** Native
-- **English:** Advanced
-- **Japanese & German:** Beginner
-
----
-
-## Technical Skills
-- **General Software:** Word, Excel, PowerPoint, WebEx, TeamCenter
-- **Modeling Tools:** Catia, SolidWorks, AutoCAD, VisMockup
-- **Analysis Tools:** STAR CCM+, ANSYS
-- **Programming Languages:** VBA, C#
-- **Other:** Unity, Photoshop, Sharepoint, Oracle
-
----
+- **2015-2019**: PEMA Science Highschool
 
 ## Professional Experience
+- **2023 August-September**: ALBA Construction
+ - Historical Monuments Preservation and Restoration
+ - Mahmut Muhtar Pasha Mansion Restoration Project
+ - Construction & Office Intern
 
-### UNIQUETECH Muhendislik (2022 - Present)
-**Deputy General Manager**
+- **2023 July-August**: ÖZEN Architecture
+ - Office Intern
 
-### Makine ve Kimya Endüstrisi (2021 - 2022)
-**General Manager Consultant**
-- Directed R&D for weaponry, ammunition, mechatronics, rockets, explosives, and chemicals across 11 factories.
+- **2022 July-August**: Rönesans International Construction Investment Industry and Trade Inc.
+ - Financial Center VakifBank Head Office Building Project
+ - Construction Intern
 
-### TÜBİTAK (TÜSSİDE) (2020 - 2021)
-**Technical Consultant**
-- Conducted feasibility studies for rare earth elements and magnet production.
+## Software Skills
+- **BIM/CAD**: AutoCAD / Revit
+- **MODEL**: Rhino / Sketchup / Blender
+- **RENDER**: Lumion
+- **ADOBE**: Photoshop / Illustrator / InDesign
 
-### Rumelisiad Girişim A.Ş. (2018 - 2020)
-**General Manager**
-- Focused on high-purity silicon, lithium-ion batteries, electric motors, and magnets.
+## Languages
+- **Native**: Turkish
+- **Advanced**: English
+- **Elementary**: Spanish
 
-### Doğu Pres Otomotiv (2017 - 2018)
-**R&D Director**
+## Interests & Focus Areas
+- Photography
+- Art History
+- Architecture History
+- Art
+- Archeology
+- Travelling
+- Restoration
 
-### Toyota Boshoku Europe N.V. (2010 - 2017)
-- **R&D Filter and Powertrain Division - Assistant Manager**
-  - Led projects for filtration and powertrain components, including Li-ion batteries and electric motors.
-- **VA/VE Division - Assistant Manager**
-  - Cost-reduction activities across multiple factories in Europe, Africa, and the Middle East.
-
-### Ford Otosan (2007 - 2010)
-- **Powertrain Division - Senior Air Intake Systems Engineer**
-- **Powertrain Division - Driveline Engineer**
-
----
-
-## Selected Projects
-- Preparation of Rare Earth-Doped NMC Cathode Materials for Li-Ion Batteries
-- Lithium-Ion Batteries: Process Changes for Performance Optimization
-- Air Intake Design for Ford Galaxy, S-Max, Edge, and Mondeo
-- Driveline System Design of Cargo Trucks
-- Feasibility Study System (VBA software)
-
----
-
-## Certifications
-- Six Sigma Green Belt
-- CATIA Professional Designer
-- ANSYS Workbench
-- NVH (Basics of Vibration)
-- Toyota Way & Problem Solving
-
----
-
-## Laboratory Experience
-- SEM & FIB (EDX, EBSD, WDS Detectors)
-- XRD, ICP-OES, Particle Sizer, Ion Mill
-- Battery Aging Chambers, Electrode Slurry Production
-
----
-
-## Conferences & Workshops
-- SEDEC 2022, Ankara (Speaker)
-- Rare Earth Elements Workshop, Kırka (Speaker)
-- Technology Networks for Rare Earth and Refractory Metals, Ankara
-
----
-
-## Hobbies
-- Technology advancements, reading about automotive engineering, and research on renewable energy.
+Aims to contribute to architecture by developing innovative and sustainable approaches.
 """
 
 # }}}
