@@ -107,6 +107,7 @@ class MCPToolkit(Toolkit):
                 for tool in tools.tools:
                     schema = dict(tool.inputSchema)
                     schema["required"] = list(schema["properties"].keys())
+                    schema["additionalProperties"] = False
                     param = ChatCompletionToolParam(
                         type="function",
                         function=FunctionDefinition(
