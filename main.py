@@ -161,9 +161,9 @@ async def send_message(
         await assistant.run(chat)
 
         # TODO update chat title async
-        print(len(chat.state.messages))
-        if len(chat.state.messages) == 2:
+        if not chat.state.title:
             await chat._update_title()
+            # TODO send title update to client
     except ClientDisconnect:
         # TODO save interrupted messages
         logger.info("Client disconnected")

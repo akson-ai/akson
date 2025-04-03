@@ -160,10 +160,13 @@ class Chat:
 
         instructions = """
             You are a helpful summarizer.
-            Your input is the first message of a conversation with an AI assistant.
+            Your input is the first 2 messages of a conversation.
             Output a title for the conversation.
         """
-        input = self.state.messages[0]["content"]
+        input = (
+            f"<user>{self.state.messages[0]['content']}</user>\n\n"
+            f"<assistant>{self.state.messages[1]['content']}</assistant>"
+        )
         client = AsyncOpenAI()
         response = await client.beta.chat.completions.parse(
             model="gpt-4o-mini",
