@@ -40,10 +40,10 @@ class SimpleAssistant(Assistant):
     ):
         self.system_prompt = system_prompt
         self.output_type = output_type
+        self.toolkit = toolkit
+        self.examples: list[tuple[str, BaseModel]] = []
         self._name = name
         self._client = AsyncOpenAI()
-        self._toolkit = toolkit
-        self.examples: list[tuple[str, BaseModel]] = []
 
     @property
     def name(self) -> str:
@@ -60,10 +60,10 @@ class SimpleAssistant(Assistant):
         messages.append(_convert_assistant_message(message))
 
         # We keep continue hitting OpenAI API until there are no more tool calls.
-        if self._toolkit:
+        if self.toolkit:
             # TODO add max number of tool calls param
             while message.tool_calls:
-                tool_calls = await self._toolkit.handle_tool_calls(message.tool_calls)
+                tool_calls = await self.toolkit.handle_tool_calls(message.tool_calls)
                 messages.extend(tool_calls)
 
                 message = await self._complete(messages, chat)
@@ -110,8 +110,8 @@ class SimpleAssistant(Assistant):
         message_started = False
 
         kwargs = {}
-        if self._toolkit:
-            tools = await self._toolkit.get_tools()
+        if self.toolkit:
+            tools = await self.toolkit.get_tools()
             if tools:
                 kwargs["tools"] = tools
                 kwargs["tool_choice"] = "auto"
@@ -155,9 +155,9 @@ class SimpleAssistant(Assistant):
         raise Exception("Stream ended unexpectedly")
 
     async def _tool_kwargs(self) -> dict[str, Any]:
-        if not self._toolkit:
+        if not self.toolkit:
             return {}
-        tools = await self._toolkit.get_tools()
+        tools = await self.toolkit.get_tools()
         if not tools:
             return {}
         return {"tools": tools, "tool_choice": "auto", "parallel_tool_calls": False}
