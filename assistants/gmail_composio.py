@@ -7,7 +7,7 @@ from openai.types.chat import (
     ParsedFunctionToolCall,
 )
 
-from framework import SimpleAssistant, Toolkit
+from assistant import SimpleAssistant, Toolkit
 from logger import logger
 
 

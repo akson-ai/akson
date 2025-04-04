@@ -1,3 +1,3 @@
-from framework import SimpleAssistant
+from assistant import SimpleAssistant
 
 assistant = SimpleAssistant(name="Assistant", system_prompt="You are a helpful assistant.")

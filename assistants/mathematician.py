@@ -1,4 +1,4 @@
-from framework import DeclarativeAssistant
+from assistant import DeclarativeAssistant
 
 
 class Mathematician(DeclarativeAssistant):
