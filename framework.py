@@ -47,6 +47,7 @@ class SimpleAssistant(Assistant):
         self._name = name
         self._client = AsyncOpenAI()
         self._toolkit = toolkit
+        self.examples: list[tuple[str, BaseModel]] = []
 
     # TODO can I remove name property override and just use attribute?
     @property
@@ -75,6 +76,13 @@ class SimpleAssistant(Assistant):
     def _get_openai_messages(self, chat: Chat) -> list[ChatCompletionMessageParam]:
         messages: Sequence[ChatCompletionMessageParam] = []
         messages.append(ChatCompletionSystemMessageParam(role="system", content=self._get_system_prompt()))
+        for user_message, response in self.examples:
+            messages.extend(
+                [
+                    {"role": "system", "name": "example_user", "content": user_message},
+                    {"role": "system", "name": "example_assistant", "content": response.model_dump_json()},
+                ]
+            )
         for message in chat.state.messages:
             if message.get("category"):
                 continue
@@ -148,6 +156,10 @@ class SimpleAssistant(Assistant):
             return {}
         return {"tools": tools, "tool_choice": "auto", "parallel_tool_calls": False}
 
+    def add_example(self, user_message: str, response: BaseModel):
+        """Add an example to the prompt."""
+        self.examples.append((user_message, response))
+
 
 def _convert_assistant_message(message: ParsedChatCompletionMessage) -> ChatCompletionAssistantMessageParam:
     if message.tool_calls:
@@ -188,43 +200,6 @@ class DeclarativeAssistant(SimpleAssistant):
         functions = [getattr(self, name) for name, func in self.__class__.__dict__.items() if callable(func)]
         toolkit = FunctionToolkit(functions)
         super().__init__(name=name, system_prompt=system_prompt, toolkit=toolkit)
-
-
-# TODO put back StructuredOutput as assistants
-# class StructuredOutput:
-#     """Get structured output from a chat model."""
-
-#     def __init__(self, system_prompt: str, response_format: type[BaseModel]):
-#         self.system_prompt = system_prompt
-#         self.response_format = response_format
-#         self._chat = Chat()
-#         self._client = AzureOpenAI()
-
-#     def add_example(self, user_message: str, response: BaseModel):
-#         """Add an example to the prompt."""
-#         self._chat.messages.extend(
-#             [
-#                 {"role": "system", "name": "example_user", "content": user_message},
-#                 {"role": "system", "name": "example_assistant", "content": response.model_dump_json()},
-#             ]
-#         )
-
-#     def run(self, chat: Chat) -> object:
-#         """Run the system prompt on chat and return the parsed response."""
-#         response = self._client.beta.chat.completions.parse(
-#             model=os.environ["OPENAI_MODEL"],
-#             response_format=self.response_format,
-#             messages=self._chat.messages + chat.messages,
-#         )
-#         instance = response.choices[0].message.parsed
-#         assert isinstance(instance, self.response_format)
-#         return instance
-
-#     def run_user_message(self, user_message: str) -> object:
-#         """Run the system prompt on a user message and return the parsed response."""
-#         chat = Chat()
-#         chat.messages.append({"role": "user", "content": user_message})
-#         return self.run(chat)
 
 
 if __name__ == "__main__":
