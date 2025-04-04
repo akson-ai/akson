@@ -31,5 +31,8 @@ class Result(BaseModel):
 
 
 mathematician3 = SimpleAssistant(
-    name="Mathematician3", system_prompt=system_prompt, toolkit=toolkit, output_type=Result
+    name="Mathematician3",
+    system_prompt=system_prompt,
+    toolkit=toolkit,
+    output_type=Result,
 )

@@ -4,7 +4,7 @@ import time
 from datetime import datetime
 from typing import Any, Optional, Sequence
 
-from openai import NOT_GIVEN, AsyncOpenAI
+from openai import AsyncOpenAI
 from openai.lib.streaming.chat import (
     ChunkEvent,
     ContentDeltaEvent,
@@ -22,14 +22,10 @@ from openai.types.chat import (
 )
 from openai.types.chat.chat_completion_message_tool_call_param import Function
 from pydantic import BaseModel
-from typing_extensions import TypeVar
 
 from crowd import Assistant, Chat, ChatState
 from function_calling import FunctionToolkit, Toolkit
 from logger import logger
-
-# TODO can I remove OutputTypeT ?
-OutputTypeT = TypeVar("OutputTypeT", BaseModel, str)
 
 
 class SimpleAssistant(Assistant):
@@ -39,7 +35,7 @@ class SimpleAssistant(Assistant):
         self,
         name: str,
         system_prompt: str,
-        output_type: type[OutputTypeT] = str,
+        output_type: Optional[type[BaseModel]] = None,
         toolkit: Optional[Toolkit] = None,
     ):
         self.system_prompt = system_prompt
@@ -112,11 +108,21 @@ class SimpleAssistant(Assistant):
         # Because we're streaming, we need to track whether a message has started or not.
         message_started = False
 
+        kwargs = {}
+        if self._toolkit:
+            tools = await self._toolkit.get_tools()
+            if tools:
+                kwargs["tools"] = tools
+                kwargs["tool_choice"] = "auto"
+                kwargs["parallel_tool_calls"] = False
+
+        if self.output_type:
+            kwargs["response_format"] = self.output_type
+
         async with self._client.beta.chat.completions.stream(
             model=os.environ["OPENAI_MODEL"],
             messages=messages,
-            response_format=self.output_type if self.output_type != str else NOT_GIVEN,
-            **await self._tool_kwargs(),
+            **kwargs,
         ) as stream:
             async for event in stream:
                 match event:  # https://github.com/openai/openai-python/blob/main/helpers.md#chat-completions-events
