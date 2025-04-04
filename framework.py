@@ -49,7 +49,6 @@ class SimpleAssistant(Assistant):
         self._toolkit = toolkit
         self.examples: list[tuple[str, BaseModel]] = []
 
-    # TODO can I remove name property override and just use attribute?
     @property
     def name(self) -> str:
         return self._name
