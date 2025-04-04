@@ -61,6 +61,7 @@ class SimpleAssistant(Assistant):
 
         # We keep continue hitting OpenAI API until there are no more tool calls.
         if self._toolkit:
+            # TODO add max number of tool calls param
             while message.tool_calls:
                 tool_calls = await self._toolkit.handle_tool_calls(message.tool_calls)
                 messages.extend(tool_calls)
