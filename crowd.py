@@ -5,7 +5,6 @@ from abc import ABC, abstractmethod
 from typing import Literal, NotRequired, Optional, TypedDict
 
 from fastapi import Request
-from openai import AsyncOpenAI
 from pydantic import BaseModel
 from starlette.requests import ClientDisconnect
 
@@ -133,8 +132,9 @@ class Chat:
         await self._queue.put(message)
 
     async def _update_title(self):
-        class TitleResponse(BaseModel):
-            title: str
+        # TODO use structured output to get title response
+        # class TitleResponse(BaseModel):
+        #     title: str
 
         instructions = """
             You are a helpful summarizer.
@@ -145,18 +145,11 @@ class Chat:
             f"<user>{self.state.messages[0]['content']}</user>\n\n"
             f"<assistant>{self.state.messages[1]['content']}</assistant>"
         )
-        client = AsyncOpenAI()
-        response = await client.beta.chat.completions.parse(
-            model="gpt-4o-mini",
-            response_format=TitleResponse,
-            messages=[
-                {"role": "system", "content": instructions},
-                {"role": "user", "content": input},
-            ],
-        )
-        instance = response.choices[0].message.parsed
-        assert isinstance(instance, TitleResponse)
-        self.state.title = instance.title
+        # TODO move update title logic into main.py
+        from framework import SimpleAssistant
+
+        titler = SimpleAssistant(name="Titler", system_prompt=instructions)
+        self.state.title = await titler.respond(input)
         await self._queue_message({"type": "update_title", "title": self.state.title})
 
 
@@ -174,3 +167,16 @@ class Assistant(ABC):
 
     @abstractmethod
     async def run(self, chat: Chat) -> None: ...
+
+    async def respond(self, user_message: str) -> str:
+        state = ChatState(id="temp", messages=[])
+        # TODO generate id automatically
+        # TODO generate name automatically (is name really required?)
+        state.messages.append(
+            {"id": "asldkfjaslkfj", "role": "assistant", "name": "asldkjlkfaj", "content": user_message}
+        )
+        chat = Chat(state)
+        # TODO why setting _assistant needed before run() ?
+        chat._assistant = self
+        await self.run(chat)
+        return chat.state.messages[-1]["content"]
