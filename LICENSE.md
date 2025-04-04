@@ -1,4 +1,4 @@
-# Elastic License
+# [Elastic License 2.0](https://www.elastic.co/licensing/elastic-license)
 
 Copyright (c) 2024 Akson AI
 
