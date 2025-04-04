@@ -2,7 +2,7 @@ from typing import List, Optional
 
 from pydantic import BaseModel, Field
 
-from assistant import DeclarativeAssistant
+from framework import DeclarativeAssistant
 
 
 class TemporalContext(BaseModel):

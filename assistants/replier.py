@@ -1,4 +1,4 @@
-from assistant import SimpleAssistant
+from framework import SimpleAssistant
 
 system_prompt = """
 You are a helpful assistant that drafts reply messages. The user will provide you with:

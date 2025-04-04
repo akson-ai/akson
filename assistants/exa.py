@@ -2,7 +2,7 @@ import os
 
 from exa_py import Exa as ExaClient
 
-from assistant import DeclarativeAssistant
+from framework import DeclarativeAssistant
 
 client = ExaClient(os.environ["EXA_API_KEY"])
 

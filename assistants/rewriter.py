@@ -1,4 +1,4 @@
-from assistant import SimpleAssistant
+from framework import SimpleAssistant
 
 system_prompt = """
 # Instructions for the Assistant

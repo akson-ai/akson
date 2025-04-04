@@ -1,4 +1,4 @@
-from assistant import FunctionToolkit, SimpleAssistant
+from framework import FunctionToolkit, SimpleAssistant
 
 system_prompt = """
     You are a mathematician but you can only add two numbers.

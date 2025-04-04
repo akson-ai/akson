@@ -4,7 +4,7 @@ import time
 import putiopy
 import requests
 
-from assistant import DeclarativeAssistant
+from framework import DeclarativeAssistant
 
 PUTIO_TOKEN = os.environ["PUTIO_TOKEN"]
 

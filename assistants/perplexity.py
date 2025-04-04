@@ -2,7 +2,7 @@ import os
 
 import requests
 
-from assistant import Assistant, Chat
+from framework import Assistant, Chat
 
 PERPLEXITY_API_KEY = os.environ["PERPLEXITY_API_KEY"]
 

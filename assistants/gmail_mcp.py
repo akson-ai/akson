@@ -1,4 +1,4 @@
-from assistant import SimpleAssistant
+from framework import SimpleAssistant
 from function_calling import MCPToolkit
 
 gmail = SimpleAssistant(
