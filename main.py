@@ -10,7 +10,7 @@ from sse_starlette.event import ServerSentEvent
 from sse_starlette.sse import EventSourceResponse
 from starlette.requests import ClientDisconnect
 
-from framework import Assistant, Chat, ChatState, Message
+from crowd import Assistant, Chat, ChatState, Message
 from loader import load_assistants
 from logger import logger
 

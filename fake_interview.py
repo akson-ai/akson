@@ -5,7 +5,8 @@ load_dotenv()
 from agents.interviewer import company_name
 from agents.interviewer import interviewer as agent
 from agents.interviewer import job_description, job_title
-from framework import ConversationalAgent, DeclarativeAssistant
+
+from crowd import ConversationalAgent, DeclarativeAssistant
 
 # {{{ input
 resume = """

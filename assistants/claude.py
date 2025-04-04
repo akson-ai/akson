@@ -9,7 +9,7 @@ from anthropic.types import (
     TextDelta,
 )
 
-from framework import Assistant, Chat
+from crowd import Assistant, Chat
 from logger import logger
 
 

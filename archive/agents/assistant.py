@@ -14,7 +14,7 @@ from langgraph.prebuilt import create_react_agent
 from PIL import Image
 from pydantic import BaseModel, Field
 
-from framework import Agent
+from crowd import Agent
 from loader import load_tools
 
 from .prompts import (

@@ -22,7 +22,7 @@ from openai.types.chat import (
 )
 from openai.types.chat.chat_completion_message_tool_call_param import Function
 
-from framework import Assistant, Chat, ChatState
+from crowd import Assistant, Chat, ChatState
 from function_calling import FunctionToolkit, Toolkit
 from logger import logger
 
