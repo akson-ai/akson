@@ -4,7 +4,7 @@ import time
 from datetime import datetime
 from typing import Any, Optional, Sequence
 
-from openai import AsyncOpenAI
+from openai import NOT_GIVEN, AsyncOpenAI
 from openai.lib.streaming.chat import (
     ChunkEvent,
     ContentDeltaEvent,
@@ -21,21 +21,34 @@ from openai.types.chat import (
     ParsedChatCompletionMessage,
 )
 from openai.types.chat.chat_completion_message_tool_call_param import Function
+from pydantic import BaseModel
+from typing_extensions import TypeVar
 
 from crowd import Assistant, Chat, ChatState
 from function_calling import FunctionToolkit, Toolkit
 from logger import logger
 
+# TODO can I remove OutputTypeT ?
+OutputTypeT = TypeVar("OutputTypeT", BaseModel, str)
+
 
 class SimpleAssistant(Assistant):
     """Simple assistant that uses OpenAI's chat API to generate responses."""
 
-    def __init__(self, name: str, system_prompt: str, toolkit: Optional[Toolkit] = None):
+    def __init__(
+        self,
+        name: str,
+        system_prompt: str,
+        output_type: type[OutputTypeT] = str,
+        toolkit: Optional[Toolkit] = None,
+    ):
         self.system_prompt = system_prompt
+        self.output_type = output_type
         self._name = name
         self._client = AsyncOpenAI()
         self._toolkit = toolkit
 
+    # TODO can I remove name property override and just use attribute?
     @property
     def name(self) -> str:
         return self._name
@@ -95,6 +108,7 @@ class SimpleAssistant(Assistant):
         async with self._client.beta.chat.completions.stream(
             model=os.environ["OPENAI_MODEL"],
             messages=messages,
+            response_format=self.output_type if self.output_type != str else NOT_GIVEN,
             **await self._tool_kwargs(),
         ) as stream:
             async for event in stream:
@@ -173,7 +187,7 @@ class DeclarativeAssistant(SimpleAssistant):
         system_prompt = self.__doc__ or ""
         functions = [getattr(self, name) for name, func in self.__class__.__dict__.items() if callable(func)]
         toolkit = FunctionToolkit(functions)
-        super().__init__(name, system_prompt, toolkit)
+        super().__init__(name=name, system_prompt=system_prompt, toolkit=toolkit)
 
 
 # TODO put back StructuredOutput as assistants
