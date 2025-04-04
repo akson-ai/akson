@@ -37,10 +37,12 @@ class SimpleAssistant(Assistant):
         system_prompt: str,
         output_type: Optional[type[BaseModel]] = None,
         toolkit: Optional[Toolkit] = None,
+        max_turns: int = 10,
     ):
         self.system_prompt = system_prompt
         self.output_type = output_type
         self.toolkit = toolkit
+        self.max_turns = max_turns
         self.examples: list[tuple[str, BaseModel]] = []
         self._name = name
         self._client = AsyncOpenAI()
@@ -60,9 +62,13 @@ class SimpleAssistant(Assistant):
         messages.append(_convert_assistant_message(message))
 
         # We keep continue hitting OpenAI API until there are no more tool calls.
+        current_turn = 0
         if self.toolkit:
-            # TODO add max number of tool calls param
             while message.tool_calls:
+                current_turn += 1
+                if current_turn > self.max_turns:
+                    raise Exception(f"Max turns ({self.max_turns}) exceeded")
+
                 tool_calls = await self.toolkit.handle_tool_calls(message.tool_calls)
                 messages.extend(tool_calls)
 
