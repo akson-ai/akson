@@ -29,6 +29,7 @@ os.makedirs("chats", exist_ok=True)
 assistants = {assistant.name: assistant for assistant in load_assistants().values()}
 
 default_assistant = os.getenv("DEFAULT_ASSISTANT", "ChatGPT")
+allow_origins = [origin.strip() for origin in os.getenv("ALLOW_ORIGINS", "*").split(",")]
 
 # Need to keep a single instance of each chat in memory in order to do pub/sub on queue
 # TODO try streaming response
@@ -56,7 +57,7 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=allow_origins,
     allow_methods=["*"],
     allow_headers=["*"],
     allow_credentials=True,
