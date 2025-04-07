@@ -6,7 +6,7 @@ from agents.interviewer import company_name
 from agents.interviewer import interviewer as agent
 from agents.interviewer import job_description, job_title
 
-from crowd import ConversationalAgent, DeclarativeAssistant
+from akson import ConversationalAgent, DeclarativeAssistant
 
 # {{{ input
 resume = """

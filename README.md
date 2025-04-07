@@ -1,7 +1,7 @@
-# Crowd
+# Akson
 
 ## Overview
-Crowd is a runtime platform for AI agents, similar to how web servers run web applications. It provides the infrastructure and environment for running, managing, and interacting with various AI agents through text and voice interfaces.
+Akson is a runtime platform for AI agents, similar to how web servers run web applications. It provides the infrastructure and environment for running, managing, and interacting with various AI agents through text and voice interfaces.
 
 The project is currently in its early prototype stage.
 

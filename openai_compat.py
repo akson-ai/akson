@@ -13,7 +13,7 @@ from openai.types.chat import (
 from pydantic import BaseModel, Field
 from sse_starlette import EventSourceResponse
 
-from crowd import Agent
+from akson import Agent
 
 
 class Message(BaseModel):

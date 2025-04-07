@@ -2,7 +2,7 @@ import importlib
 import os
 from typing import TypeVar
 
-from crowd import Assistant
+from akson import Assistant
 from logger import logger
 
 # from langchain_core.tools.structured import StructuredTool

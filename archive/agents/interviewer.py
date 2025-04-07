@@ -1,4 +1,4 @@
-from crowd import Agent, ChatAgent, SimpleAssistant
+from akson import Agent, ChatAgent, SimpleAssistant
 
 # {{{ input
 company_name = """ACME Works, Inc."""

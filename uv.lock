@@ -109,7 +109,7 @@ wheels = [
 ]
 
 [[package]]
-name = "crowd"
+name = "akson"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
