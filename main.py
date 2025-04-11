@@ -14,13 +14,6 @@ from akson import Assistant, Chat, ChatState, Message
 from loader import load_assistants
 from logger import logger
 
-# TODO save tool calls as openai format in messages
-# TODO write an email assistant
-# TODO write news assistant
-# TODO think about how to convert assistants to agents
-# TODO add more use case items
-# TODO add stateful agent
-
 load_dotenv()
 
 # Ensure chats directory exists
