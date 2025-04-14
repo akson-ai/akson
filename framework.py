@@ -154,9 +154,9 @@ class SimpleAssistant(Assistant):
                         if choice.finish_reason == "tool_calls":
                             await chat.add_chunk(")")
                         await chat.end_message()
-                        if choice.finish_reason in ("stop", "tool_calls"):
-                            return choice.message
-                        raise NotImplementedError(f"finish_reason={choice.finish_reason}")
+                        if choice.finish_reason not in ("stop", "tool_calls"):
+                            raise NotImplementedError(f"finish_reason={choice.finish_reason}")
+                        return choice.message
 
         raise Exception("Stream ended unexpectedly")
 
