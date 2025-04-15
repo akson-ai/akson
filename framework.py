@@ -51,6 +51,23 @@ class SimpleAssistant(Assistant):
     def name(self) -> str:
         return self._name
 
+    async def respond(self, user_message: str) -> str | BaseModel:
+        state = ChatState(id="temp", messages=[])
+        # TODO generate id automatically
+        # TODO generate name automatically (is name really required?)
+        state.messages.append(
+            {"id": "asldkfjaslkfj", "role": "assistant", "name": "asldkjlkfaj", "content": user_message}
+        )
+        chat = Chat(state)
+        # TODO why setting _assistant needed before run() ?
+        chat._assistant = self
+        await self.run(chat)
+        if self.output_type:
+            assert isinstance(chat._structured_output, self.output_type)
+            return chat._structured_output
+
+        return chat.state.messages[-1]["content"]
+
     async def run(self, chat: Chat) -> None:
         logger.debug(f"Completing chat...\nLast message: {chat.state.messages[-1]}")
 
@@ -156,6 +173,9 @@ class SimpleAssistant(Assistant):
                         await chat.end_message()
                         if choice.finish_reason not in ("stop", "tool_calls"):
                             raise NotImplementedError(f"finish_reason={choice.finish_reason}")
+                        if self.output_type:
+                            assert isinstance(choice.message.parsed, self.output_type)
+                            await chat.set_structured_output(choice.message.parsed)
                         return choice.message
 
         raise Exception("Stream ended unexpectedly")

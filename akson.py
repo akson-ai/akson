@@ -74,6 +74,9 @@ class Chat:
         self._request: Optional[Request] = None
         self._assistant: Optional[Assistant] = None
 
+        # These will be set by the Assistant.run() method.
+        self._structured_output: Optional[BaseModel] = None
+
     # TODO implement Chat.add_image method
     async def add_image(self): ...
 
@@ -124,6 +127,9 @@ class Chat:
         self.state.messages.append(message)
         await self._queue_message({"type": "end_message", "id": self._message_id})
 
+    async def set_structured_output(self, output: BaseModel):
+        self._structured_output = output
+
     async def _queue_message(self, message: dict):
         if not isinstance(self._request, Request):
             return
@@ -132,9 +138,8 @@ class Chat:
         await self._queue.put(message)
 
     async def _update_title(self):
-        # TODO use structured output to get title response
-        # class TitleResponse(BaseModel):
-        #     title: str
+        class TitleResponse(BaseModel):
+            title: str
 
         instructions = """
             You are a helpful summarizer.
@@ -148,8 +153,10 @@ class Chat:
         # TODO move update title logic into main.py
         from framework import SimpleAssistant
 
-        titler = SimpleAssistant(name="Titler", system_prompt=instructions)
-        self.state.title = await titler.respond(input)
+        titler = SimpleAssistant(name="Titler", system_prompt=instructions, output_type=TitleResponse)
+        response = await titler.respond(input)
+        assert isinstance(response, TitleResponse)
+        self.state.title = response.title
         await self._queue_message({"type": "update_title", "title": self.state.title})
 
 
@@ -167,16 +174,3 @@ class Assistant(ABC):
 
     @abstractmethod
     async def run(self, chat: Chat) -> None: ...
-
-    async def respond(self, user_message: str) -> str:
-        state = ChatState(id="temp", messages=[])
-        # TODO generate id automatically
-        # TODO generate name automatically (is name really required?)
-        state.messages.append(
-            {"id": "asldkfjaslkfj", "role": "assistant", "name": "asldkjlkfaj", "content": user_message}
-        )
-        chat = Chat(state)
-        # TODO why setting _assistant needed before run() ?
-        chat._assistant = self
-        await self.run(chat)
-        return chat.state.messages[-1]["content"]
