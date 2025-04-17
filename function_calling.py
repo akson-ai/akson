@@ -4,14 +4,11 @@ from inspect import Parameter, getdoc, signature
 from typing import Callable, get_type_hints
 
 import docstring_parser
+from litellm import ChatCompletionMessageToolCall, Message
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 from openai import pydantic_function_tool
-from openai.types.chat import (
-    ChatCompletionToolMessageParam,
-    ChatCompletionToolParam,
-    ParsedFunctionToolCall,
-)
+from openai.types.chat import ChatCompletionToolParam
 from openai.types.shared_params import FunctionDefinition
 from pydantic import Field, create_model
 
@@ -24,9 +21,7 @@ class Toolkit(ABC):
     async def get_tools(self) -> list[ChatCompletionToolParam]: ...
 
     @abstractmethod
-    async def handle_tool_calls(
-        self, tool_calls: list[ParsedFunctionToolCall]
-    ) -> list[ChatCompletionToolMessageParam]: ...
+    async def handle_tool_calls(self, tool_calls: list[ChatCompletionMessageToolCall]) -> list[Message]: ...
 
 
 class FunctionToolkit(Toolkit):
@@ -41,17 +36,17 @@ class FunctionToolkit(Toolkit):
         """Returns the list of tools to be passed into completion reqeust."""
         return self.tools
 
-    async def handle_tool_calls(self, tool_calls: list[ParsedFunctionToolCall]) -> list[ChatCompletionToolMessageParam]:
+    async def handle_tool_calls(self, tool_calls: list[ChatCompletionMessageToolCall]) -> list[Message]:
         """This is called each time a response is received from completion method."""
         logger.info("Number of tool calls: %s", len(tool_calls))
         messages = []
         for tool_call in tool_calls:
             function = tool_call.function
-            logger.info("Tool call: %s(%s)", function.name, function.parsed_arguments)
-            instance = function.parsed_arguments
+            assert isinstance(function.name, str)
+            logger.info("Tool call: %s(%s)", function.name, function.arguments)
             func = self.functions[function.name]
             model = self.models[function.name]
-            assert isinstance(instance, model)
+            instance = model.model_validate_json(tool_call.function.arguments)
             kwargs = {name: getattr(instance, name) for name in model.model_fields}
 
             # Fill in default values
@@ -120,15 +115,16 @@ class MCPToolkit(Toolkit):
                     out.append(param)
                 return out
 
-    async def handle_tool_calls(self, tool_calls: list[ParsedFunctionToolCall]) -> list[ChatCompletionToolMessageParam]:
+    async def handle_tool_calls(self, tool_calls: list[ChatCompletionMessageToolCall]) -> list[Message]:
         async with stdio_client(self.server_params) as (read, write):
             async with ClientSession(read, write) as session:
                 await session.initialize()
                 output = []
                 for tool_call in tool_calls:
                     logger.info(f"Executing tool call: {tool_call}")
-                    arguments = tool_call.function.parsed_arguments
+                    arguments = json.loads(tool_call.function.arguments)
                     assert isinstance(arguments, dict)
+                    assert isinstance(tool_call.function.name, str)
                     result = await session.call_tool(tool_call.function.name, arguments=arguments)
                     logger.debug(f"Result: {result}")
                     output.append(
