@@ -1,4 +1,3 @@
-import os
 import time
 import uuid
 from datetime import datetime
@@ -26,10 +25,12 @@ class SimpleAssistant(Assistant):
         self,
         name: str,
         system_prompt: str,
+        model: str = "gpt-4.1",
         output_type: Optional[type[BaseModel]] = None,
         toolkit: Optional[Toolkit] = None,
         max_turns: int = 10,
     ):
+        self.model = model
         self.system_prompt = system_prompt
         self.output_type = output_type
         self.toolkit = toolkit
@@ -145,7 +146,7 @@ class SimpleAssistant(Assistant):
             kwargs["response_format"] = self.output_type
 
         response = await acompletion(
-            model=os.environ["OPENAI_MODEL"],
+            model=self.model,
             messages=messages,
             stream=True,
             **kwargs,
