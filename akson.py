@@ -2,26 +2,14 @@ import asyncio
 import os
 import uuid
 from abc import ABC, abstractmethod
-from typing import Literal, NotRequired, Optional, TypedDict
+from typing import Literal, Optional
 
 from fastapi import Request
+from litellm import Message
 from pydantic import BaseModel
 from starlette.requests import ClientDisconnect
 
 MessageCategory = Literal["info", "success", "warning", "error"]
-
-
-class Message(TypedDict):
-    """Messages that are inside a chat."""
-
-    id: str
-    role: Literal["user", "assistant"]
-    name: str
-    content: str
-    # Messages with category are for displaying special messages to the user.
-    # They should not be sent to the completion API.
-    # They get filtered out from Chat.state.messages list provided to the Assistant.run().
-    category: NotRequired[Optional[MessageCategory]]
 
 
 class ChatState(BaseModel):

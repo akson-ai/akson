@@ -147,7 +147,7 @@ async def send_message(
 
         user_message = Message(
             id=message.id,
-            role="user",
+            role="user",  # type: ignore
             name="You",
             content=message.content,
         )

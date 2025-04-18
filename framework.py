@@ -1,9 +1,10 @@
 import os
 import time
+import uuid
 from datetime import datetime
 
 # from io import StringIO  # TODO use StringIO to accumulate message content and function arguments
-from typing import Any, Optional, Sequence
+from typing import Any, Optional
 
 from litellm import CustomStreamWrapper, acompletion
 from litellm.types.utils import (
@@ -42,9 +43,13 @@ class SimpleAssistant(Assistant):
 
     async def respond(self, user_message: str) -> str | BaseModel:
         state = ChatState(id="temp", messages=[])
-        # TODO generate id automatically
-        # TODO generate name automatically (is name really required?)
-        state.messages.append({"id": "asldkfjaslkfj", "role": "user", "name": "asldkjlkfaj", "content": user_message})
+        state.messages.append(
+            Message(
+                id=str(uuid.uuid4()),
+                role="user",  # type: ignore
+                content=user_message,
+            )
+        )
         chat = Chat(state)
         # TODO why setting _assistant needed before run() ?
         chat._assistant = self
@@ -59,9 +64,8 @@ class SimpleAssistant(Assistant):
     async def run(self, chat: Chat) -> None:
         logger.debug(f"Completing chat...\nLast message: {chat.state.messages[-1]}")
 
-        # These messages are sent to OpenAI in chat completion request.
-        # Here, we convert chat messages in web UI to OpenAI format.
-        messages = self._get_openai_messages(chat)
+        # These messages are sent to the LLM API, prefixed by the system prompt.
+        messages = self._get_messages(chat)
 
         message = await self._complete(messages, chat)
         messages.append(message)
@@ -80,35 +84,33 @@ class SimpleAssistant(Assistant):
                 message = await self._complete(messages, chat)
                 messages.append(message)
 
-    def _get_openai_messages(self, chat: Chat) -> list[Message]:
-        messages: Sequence[Message] = []
+    def _get_messages(self, chat: Chat) -> list[Message]:
+        messages: list[Message] = []
 
-        # Add system prompt
-        msg = Message(content=self._get_system_prompt())
-        msg.role = "system"
-        messages.append(msg)
+        messages.append(
+            Message(
+                role="system",  # type: ignore
+                content=self._get_system_prompt(),
+            )
+        )
 
-        # TODO add examples
-        # for user_message, response in self.examples:
-        #     messages.extend(
-        #         [
-        #             {"role": "system", "name": "example_user", "content": user_message},
-        #             {"role": "system", "name": "example_assistant", "content": response.model_dump_json()},
-        #         ]
-        #     )
+        for user_message, response in self.examples:
+            messages.extend(
+                [
+                    Message(
+                        role="system",  # type: ignore
+                        name="example_user",
+                        content=user_message,
+                    ),
+                    Message(
+                        role="system",  # type: ignore
+                        name="example_assistant",
+                        content=response.model_dump_json(),
+                    ),
+                ]
+            )
 
-        # Add user and assistant messages
-        for message in chat.state.messages:
-            if message.get("category"):
-                continue
-            if message["role"] == "user":
-                msg = Message(content=message["content"], provider_specific_fields={"name": message["name"]})
-                msg.role = "user"
-                messages.append(msg)
-            elif message["role"] == "assistant":
-                msg = Message(content=message["content"], provider_specific_fields={"name": message["name"]})
-                msg.role = "assistant"
-                messages.append(msg)
+        messages.extend(chat.state.messages)
         return messages
 
     def _get_system_prompt(self) -> str:
@@ -256,7 +258,13 @@ if __name__ == "__main__":
             return a + b
 
     chat = Chat(state=ChatState.create_new("id", "assistant"))
-    chat.state.messages.append({"id": "1", "role": "user", "name": "user", "content": "What is three plus one?"})
+    chat.state.messages.append(
+        Message(
+            id=str(uuid.uuid4()),
+            role="user",  # type: ignore
+            content="What is three plus one?",
+        )
+    )
 
     mathematician = Mathematician()
     message = mathematician.run(chat)
