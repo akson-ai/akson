@@ -24,8 +24,8 @@ class SimpleAssistant(Assistant):
     def __init__(
         self,
         name: str,
-        system_prompt: str,
         model: str = "gpt-4.1",
+        system_prompt: Optional[str] = None,
         output_type: Optional[type[BaseModel]] = None,
         toolkit: Optional[Toolkit] = None,
         max_turns: int = 10,
@@ -115,9 +115,15 @@ class SimpleAssistant(Assistant):
         return messages
 
     def _get_system_prompt(self) -> str:
+        prompt = self.system_prompt or ""
+        if prompt:
+            prompt += "\n\n"
+
         t = datetime.now().strftime("%A, %B %d, %Y at %I:%M:%S %p")
         o = time.strftime("%z")  # Timezone offset
-        return f"{self.system_prompt}\n\nToday's date and time is {t} ({o})."
+        prompt += f"Today's date and time is {t} ({o})"
+
+        return prompt
 
     async def _complete(self, messages: list[Message], chat: Chat) -> Message:
         logger.info("Completing chat")
