@@ -1,3 +1,4 @@
+import os
 import time
 import uuid
 from datetime import datetime
@@ -24,7 +25,7 @@ class SimpleAssistant(Assistant):
     def __init__(
         self,
         name: str,
-        model: str = "gpt-4.1",
+        model: str = os.environ["DEFAULT_MODEL"],
         system_prompt: Optional[str] = None,
         output_type: Optional[type[BaseModel]] = None,
         toolkit: Optional[Toolkit] = None,
@@ -56,7 +57,6 @@ class SimpleAssistant(Assistant):
         chat._assistant = self
         await self.run(chat)
         if self.output_type:
-            print(f"Structured output: {chat._structured_output}")
             assert isinstance(chat._structured_output, self.output_type)
             return chat._structured_output
 
@@ -145,9 +145,6 @@ class SimpleAssistant(Assistant):
                 kwargs["tool_choice"] = "auto"
                 kwargs["parallel_tool_calls"] = False
 
-        print(f"tools: {kwargs.get('tools')}")
-        print(f"tool_choice: {kwargs.get('tool_choice')}")
-
         if self.output_type:
             kwargs["response_format"] = self.output_type
 
@@ -157,7 +154,6 @@ class SimpleAssistant(Assistant):
             stream=True,
             **kwargs,
         )
-        print(response)
         assert isinstance(response, CustomStreamWrapper)
         await chat.begin_message()
 
@@ -170,7 +166,6 @@ class SimpleAssistant(Assistant):
 
         async for chunk in response:
             assert chunk.__class__.__name__ == "ModelResponseStream"
-            print(chunk)
             assert len(chunk.choices) == 1
             choice = chunk.choices[0]
             if choice.delta.tool_calls:
@@ -236,12 +231,14 @@ class DeclarativeAssistant(SimpleAssistant):
                 return a + b
     """
 
+    model = os.environ["DEFAULT_MODEL"]
+
     def __init__(self):
         name = self.__class__.__name__
         system_prompt = self.__doc__ or ""
         functions = [getattr(self, name) for name, func in self.__class__.__dict__.items() if callable(func)]
         toolkit = FunctionToolkit(functions)
-        super().__init__(name=name, system_prompt=system_prompt, toolkit=toolkit)
+        super().__init__(name=name, model=self.model, system_prompt=system_prompt, toolkit=toolkit)
 
 
 if __name__ == "__main__":

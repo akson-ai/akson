@@ -8,6 +8,8 @@ class Mathematician(DeclarativeAssistant):
     Use add_two_numbers function to add two numbers.
     """
 
+    model = "claude-3-7-sonnet-latest"
+
     def add_two_numbers(self, a: int, b: int) -> int:
         """
         Add two numbers
