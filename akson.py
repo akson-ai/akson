@@ -81,14 +81,22 @@ class Chat:
             }
         )
 
-    async def add_chunk(self, chunk: str, location: Literal["content", "function_name", "function_arguments"]):
+    async def add_chunk(
+        self, chunk: str, location: Literal["content", "tool_call_id", "function_name", "function_arguments"]
+    ):
         if location == "content":
             self._content.write(chunk)
         elif location == "function_name":
             self._function_name.write(chunk)
         elif location == "function_arguments":
             self._function_arguments.write(chunk)
-        await self._queue_message({"type": "add_chunk", "location": location, "chunk": chunk})
+        await self._queue_message(
+            {
+                "type": "add_chunk",
+                "location": location,
+                "chunk": chunk,
+            }
+        )
 
     async def end_message(self):
         assert isinstance(self._assistant, Assistant)
@@ -108,7 +116,6 @@ class Chat:
                 )
             ]
         self.state.messages.append(message)
-        await self._queue_message({"type": "end_message", "id": self._message_id})
 
     async def set_structured_output(self, output: BaseModel):
         self._structured_output = output

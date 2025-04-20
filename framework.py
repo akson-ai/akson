@@ -2,6 +2,7 @@ import os
 import time
 import uuid
 from datetime import datetime
+from io import StringIO
 
 # from io import StringIO  # TODO use StringIO to accumulate message content and function arguments
 from typing import Any, Optional
@@ -165,42 +166,54 @@ class SimpleAssistant(Assistant):
         assert isinstance(response, CustomStreamWrapper)
         await chat.begin_message()
 
-        # We will aggregate delta messages and store them in this variable until we see a finish_reason.
+        # We will aggregate delta messages and store them in these variables until we see a finish_reason.
         # This is the only way to get the full content of the message.
         # We'll return this value at the end of the function.
-        message = Message(role="assistant", content="")
-        function = Function(name="", arguments="")
-        tool_call = ChatCompletionMessageToolCall(function=function)
+        message_role = None
+        message_content = StringIO()
+        tool_call_id = None
+        function_name = StringIO()
+        function_arguments = StringIO()
 
         async for chunk in response:
             assert chunk.__class__.__name__ == "ModelResponseStream"
             assert len(chunk.choices) == 1
             choice = chunk.choices[0]
             if choice.delta.tool_calls:
-                if not message.tool_calls:
-                    message.tool_calls = [tool_call]
-                if choice.delta.tool_calls[0].function.name:
-                    assert isinstance(function.name, str)
-                    function.name += choice.delta.tool_calls[0].function.name
-                    await chat.add_chunk(choice.delta.tool_calls[0].function.name, "function_name")
-                if choice.delta.tool_calls[0].function.arguments:
-                    function.arguments += choice.delta.tool_calls[0].function.arguments
-                    await chat.add_chunk(choice.delta.tool_calls[0].function.arguments, "function_arguments")
+                if id := choice.delta.tool_calls[0].id:
+                    tool_call_id = id
+                if name := choice.delta.tool_calls[0].function.name:
+                    function_name.write(name)
+                    await chat.add_chunk(name, "function_name")
+                if args := choice.delta.tool_calls[0].function.arguments:
+                    function_arguments.write(args)
+                    await chat.add_chunk(args, "function_arguments")
             if choice.delta.role:
-                message.role = choice.delta.role
-            if choice.delta.content:
-                message.content += choice.delta.content
-                await chat.add_chunk(choice.delta.content, "content")
+                message_role = choice.delta.role
+            if content := choice.delta.content:
+                message_content.write(content)
+                await chat.add_chunk(content, "content")
 
-            finish_reason = choice.finish_reason
-            if finish_reason:
+            if finish_reason := choice.finish_reason:
+                message = Message(
+                    id=str(uuid.uuid4()),
+                    role=message_role,  # type: ignore
+                    content=message_content.getvalue(),
+                )
                 if finish_reason == "stop":
                     if self.output_type:
-                        assert isinstance(message.content, str)
-                        instance = self.output_type.model_validate_json(message.content)
+                        instance = self.output_type.model_validate_json(message_content.getvalue())
                         await chat.set_structured_output(instance)
                 elif finish_reason == "tool_calls":
-                    pass
+                    message.tool_calls = [
+                        ChatCompletionMessageToolCall(
+                            id=tool_call_id,
+                            function=Function(
+                                name=function_name.getvalue(),
+                                arguments=function_arguments.getvalue(),
+                            ),
+                        )
+                    ]
                 else:
                     raise NotImplementedError(f"finish_reason={finish_reason}")
 
