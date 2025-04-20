@@ -91,6 +91,10 @@ class SimpleAssistant(Assistant):
                 chat.state.messages.extend(tool_calls)
                 chat.state.save_to_disk()
 
+                for tool_call in tool_calls:
+                    await chat.begin_message("tool")
+                    await chat.add_chunk(tool_call["content"], "content")
+
                 message = await self._complete(messages, chat)
                 messages.append(message)
 
@@ -164,7 +168,7 @@ class SimpleAssistant(Assistant):
             **kwargs,
         )
         assert isinstance(response, CustomStreamWrapper)
-        await chat.begin_message()
+        await chat.begin_message("assistant")
 
         # We will aggregate delta messages and store them in these variables until we see a finish_reason.
         # This is the only way to get the full content of the message.

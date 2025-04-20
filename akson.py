@@ -67,7 +67,7 @@ class Chat:
         # These will be set by the Assistant.run() method.
         self._structured_output: Optional[BaseModel] = None
 
-    async def begin_message(self):
+    async def begin_message(self, role: Literal["assistant", "tool"]):
         self._message_id = str(uuid.uuid4())
         self._content = StringIO()
         self._function_name = StringIO()
@@ -77,6 +77,7 @@ class Chat:
             {
                 "type": "begin_message",
                 "id": self._message_id,
+                "role": role,
                 "name": self._assistant.name,
             }
         )
