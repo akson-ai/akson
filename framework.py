@@ -80,7 +80,15 @@ class SimpleAssistant(Assistant):
                     raise Exception(f"Max turns ({self.max_turns}) exceeded")
 
                 tool_calls = await self.toolkit.handle_tool_calls(message.tool_calls)
+
+                # All messages must have unique IDs
+                for tool_call in tool_calls:
+                    tool_call["id"] = str(uuid.uuid4())
+                    tool_call["name"] = self.name
+
                 messages.extend(tool_calls)
+                chat.state.messages.extend(tool_calls)
+                chat.state.save_to_disk()
 
                 message = await self._complete(messages, chat)
                 messages.append(message)
@@ -174,15 +182,15 @@ class SimpleAssistant(Assistant):
                 if choice.delta.tool_calls[0].function.name:
                     assert isinstance(function.name, str)
                     function.name += choice.delta.tool_calls[0].function.name
-                    await chat.add_chunk(f"Calling function: {function.name}(")
+                    await chat.add_chunk(choice.delta.tool_calls[0].function.name, "function_name")
                 if choice.delta.tool_calls[0].function.arguments:
                     function.arguments += choice.delta.tool_calls[0].function.arguments
-                    await chat.add_chunk(choice.delta.tool_calls[0].function.arguments)
+                    await chat.add_chunk(choice.delta.tool_calls[0].function.arguments, "function_arguments")
             if choice.delta.role:
                 message.role = choice.delta.role
             if choice.delta.content:
                 message.content += choice.delta.content
-                await chat.add_chunk(choice.delta.content)
+                await chat.add_chunk(choice.delta.content, "content")
 
             finish_reason = choice.finish_reason
             if finish_reason:
@@ -192,8 +200,7 @@ class SimpleAssistant(Assistant):
                         instance = self.output_type.model_validate_json(message.content)
                         await chat.set_structured_output(instance)
                 elif finish_reason == "tool_calls":
-                    assert isinstance(message.content, str)
-                    await chat.add_chunk(")")
+                    pass
                 else:
                     raise NotImplementedError(f"finish_reason={finish_reason}")
 

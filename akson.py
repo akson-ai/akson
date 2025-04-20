@@ -2,10 +2,12 @@ import asyncio
 import os
 import uuid
 from abc import ABC, abstractmethod
+from io import StringIO
 from typing import Literal, Optional
 
 from fastapi import Request
 from litellm import Message
+from litellm.types.utils import ChatCompletionMessageToolCall, Function
 from pydantic import BaseModel
 from starlette.requests import ClientDisconnect
 
@@ -65,53 +67,46 @@ class Chat:
         # These will be set by the Assistant.run() method.
         self._structured_output: Optional[BaseModel] = None
 
-    # TODO implement Chat.add_image method
-    async def add_image(self): ...
-
-    async def add_message(self, content: str, category: Optional[MessageCategory] = None):
-        assert isinstance(self._assistant, Assistant)
-        message = Message(
-            id=str(uuid.uuid4()),
-            role="assistant",
-            name=self._assistant.name,
-            content=content,
-            category=category,
-        )
-        return await self._add_message(message)
-
-    async def _add_message(self, message: Message):
-        await self.begin_message(message.get("category"))
-        await self.add_chunk(message["content"])
-        await self.end_message()
-
-    async def begin_message(self, category: Optional[MessageCategory] = None):
+    async def begin_message(self):
         self._message_id = str(uuid.uuid4())
-        self._chunks = []
-        self._message_category: Optional[MessageCategory] = category
+        self._content = StringIO()
+        self._function_name = StringIO()
+        self._function_arguments = StringIO()
         assert isinstance(self._assistant, Assistant)
         await self._queue_message(
             {
                 "type": "begin_message",
                 "id": self._message_id,
                 "name": self._assistant.name,
-                "category": category,
             }
         )
 
-    async def add_chunk(self, chunk: str):
-        self._chunks.append(chunk)
-        await self._queue_message({"type": "add_chunk", "chunk": chunk})
+    async def add_chunk(self, chunk: str, location: Literal["content", "function_name", "function_arguments"]):
+        if location == "content":
+            self._content.write(chunk)
+        elif location == "function_name":
+            self._function_name.write(chunk)
+        elif location == "function_arguments":
+            self._function_arguments.write(chunk)
+        await self._queue_message({"type": "add_chunk", "location": location, "chunk": chunk})
 
     async def end_message(self):
         assert isinstance(self._assistant, Assistant)
-        content = "".join(self._chunks)
         message = Message(
             id=self._message_id,
             role="assistant",
             name=self._assistant.name,
-            content=content,
-            category=self._message_category,
+            content=self._content.getvalue(),
         )
+        if self._function_name.getvalue():
+            message.tool_calls = [
+                ChatCompletionMessageToolCall(
+                    function=Function(
+                        name=self._function_name.getvalue(),
+                        arguments=self._function_arguments.getvalue(),
+                    )
+                )
+            ]
         self.state.messages.append(message)
         await self._queue_message({"type": "end_message", "id": self._message_id})
 
