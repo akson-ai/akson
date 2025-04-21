@@ -60,6 +60,8 @@ class SimpleAssistant(Assistant):
             return chat.state.messages[-1]["content"]
 
     async def run(self, chat: Chat) -> None:
+        logger.info("Running assistant %s", self.name)
+
         # These messages are sent to the LLM API, prefixed by the system prompt.
         messages = self._get_messages(chat)
 
