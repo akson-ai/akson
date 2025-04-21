@@ -1,5 +1,4 @@
-from framework import SimpleAssistant
-from function_calling import MCPToolkit
+from framework import MCPToolkit, SimpleAssistant
 
 vault = "/Users/cenk/Library/Mobile Documents/iCloud~md~obsidian/Documents/my-vault"
 

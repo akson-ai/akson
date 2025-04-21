@@ -112,6 +112,7 @@ class Chat:
         if self._function_name.getvalue():
             message.tool_calls = [
                 ChatCompletionMessageToolCall(
+                    # TODO fix disappearing id
                     function=Function(
                         name=self._function_name.getvalue(),
                         arguments=self._function_arguments.getvalue(),

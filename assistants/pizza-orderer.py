@@ -1,5 +1,4 @@
-from framework import SimpleAssistant
-from function_calling import MCPToolkit
+from framework import MCPToolkit, SimpleAssistant
 
 pizza_orderer = SimpleAssistant(
     name="Pizza Orderer",

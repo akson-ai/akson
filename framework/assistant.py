@@ -15,8 +15,9 @@ from litellm.types.utils import (
 from pydantic import BaseModel
 
 from akson import Assistant, Chat
-from function_calling import FunctionToolkit, Toolkit
 from logger import logger
+
+from .function_calling import FunctionToolkit, Toolkit
 
 
 class SimpleAssistant(Assistant):
