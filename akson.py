@@ -53,32 +53,35 @@ class Chat:
     This serves as the main interface between the assistant and the web application.
     """
 
-    def __init__(self, state: ChatState):
-        # State is the chat that is persisted to disk.
+    def __init__(self, *, state: ChatState):
+        # Persistent state of the chat that is loaded from disk
         self.state = state
 
         # Message that are put here will be sent over SSE by the web server.
-        self._queue = asyncio.Queue()
+        self._queue: Optional[asyncio.Queue]
 
-        # These will be set by the request handler before passing the Chat to the Assistant.run().
-        self._request: Optional[Request] = None
-        self._assistant: Optional[Assistant] = None
+        # HTTP request
+        self._request: Optional[Request]
 
         # These will be set by the Assistant.run() method.
         self._structured_output: Optional[BaseModel] = None
+
+    @classmethod
+    def temp(cls):
+        state = ChatState(id="", messages=[], assistant="", title="")
+        return cls(state=state)
 
     async def begin_message(self, role: Literal["assistant", "tool"]):
         self._message_id = str(uuid.uuid4())
         self._content = StringIO()
         self._function_name = StringIO()
         self._function_arguments = StringIO()
-        assert isinstance(self._assistant, Assistant)
         await self._queue_message(
             {
                 "type": "begin_message",
                 "id": self._message_id,
                 "role": role,
-                "name": self._assistant.name,
+                "name": self.state.assistant,
             }
         )
 
@@ -100,11 +103,10 @@ class Chat:
         )
 
     async def end_message(self):
-        assert isinstance(self._assistant, Assistant)
         message = Message(
             id=self._message_id,
             role="assistant",
-            name=self._assistant.name,
+            name=self.state.assistant,
             content=self._content.getvalue(),
         )
         if self._function_name.getvalue():
@@ -122,11 +124,10 @@ class Chat:
         self._structured_output = output
 
     async def _queue_message(self, message: dict):
-        if not isinstance(self._request, Request):
-            return
-        if await self._request.is_disconnected():
+        if self._request and await self._request.is_disconnected():
             raise ClientDisconnect
-        await self._queue.put(message)
+        if self._queue:
+            await self._queue.put(message)
 
     async def _update_title(self):
         class TitleResponse(BaseModel):

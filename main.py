@@ -1,3 +1,4 @@
+import asyncio
 import json
 import os
 from datetime import datetime
@@ -25,7 +26,6 @@ default_assistant = os.getenv("DEFAULT_ASSISTANT", "ChatGPT")
 allow_origins = [origin.strip() for origin in os.getenv("ALLOW_ORIGINS", "*").split(",")]
 
 # Need to keep a single instance of each chat in memory in order to do pub/sub on queue
-# TODO try streaming response
 chats: dict[str, Chat] = {}
 
 
@@ -41,7 +41,7 @@ def _get_chat(chat_id: str) -> Chat:
         return chats[chat_id]
     except KeyError:
         state = _get_chat_state(chat_id)
-        chat = Chat(state)
+        chat = Chat(state=state)
         chats[chat_id] = chat
         return chat
 
@@ -136,7 +136,6 @@ async def send_message(
 ):
     """Handle a message from the client."""
     chat._request = request
-    chat._assistant = assistant
     try:
         if message.content.strip() == "/clear":
             chat.state.messages.clear()
@@ -164,7 +163,6 @@ async def send_message(
         logger.info("Client disconnected")
     finally:
         chat._request = None
-        chat._assistant = None
         chat.state.save_to_disk()
 
 
@@ -196,8 +194,12 @@ async def get_events(chat: Chat = Depends(_get_chat)):
     """Stream events to the client over SSE."""
 
     async def generate_events():
-        while True:
-            message = await chat._queue.get()
-            yield ServerSentEvent(json.dumps(message))
+        chat._queue = asyncio.Queue()
+        try:
+            while True:
+                message = await chat._queue.get()
+                yield ServerSentEvent(json.dumps(message))
+        finally:
+            chat._queue = None
 
     return EventSourceResponse(generate_events())

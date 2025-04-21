@@ -15,7 +15,7 @@ from litellm.types.utils import (
 )
 from pydantic import BaseModel
 
-from akson import Assistant, Chat, ChatState
+from akson import Assistant, Chat
 from function_calling import FunctionToolkit, Toolkit
 from logger import logger
 
@@ -45,23 +45,20 @@ class SimpleAssistant(Assistant):
         return self._name
 
     async def respond(self, user_message: str) -> str | BaseModel:
-        state = ChatState(id="temp", messages=[])
-        state.messages.append(
+        chat = Chat.temp()
+        chat.state.messages.append(
             Message(
                 id=str(uuid.uuid4()),
                 role="user",  # type: ignore
                 content=user_message,
             )
         )
-        chat = Chat(state)
-        # TODO why setting _assistant needed before run() ?
-        chat._assistant = self
         await self.run(chat)
-        if self.output_type:
-            assert isinstance(chat._structured_output, self.output_type)
-            return chat._structured_output
 
-        return chat.state.messages[-1]["content"]
+        if chat._structured_output:
+            return chat._structured_output
+        else:
+            return chat.state.messages[-1]["content"]
 
     async def run(self, chat: Chat) -> None:
         logger.debug(f"Completing chat...\nLast message: {chat.state.messages[-1]}")
@@ -285,7 +282,7 @@ if __name__ == "__main__":
             """
             return a + b
 
-    chat = Chat(state=ChatState.create_new("id", "assistant"))
+    chat = Chat.temp()
     chat.state.messages.append(
         Message(
             id=str(uuid.uuid4()),
