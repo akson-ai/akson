@@ -154,10 +154,9 @@ async def send_message(
 
         await assistant.run(chat)
 
-        # TODO update chat title async
+        # Update chat title asynchronously if needed
         if not chat.state.title:
-            await chat._update_title()
-            # TODO send title update to client
+            asyncio.create_task(chat._generate_title())
     except ClientDisconnect:
         # TODO save interrupted messages
         logger.info("Client disconnected")

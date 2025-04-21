@@ -129,7 +129,7 @@ class Chat:
         if self._queue:
             await self._queue.put(message)
 
-    async def _update_title(self):
+    async def _generate_title(self):
         class TitleResponse(BaseModel):
             title: str
 
