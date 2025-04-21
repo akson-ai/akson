@@ -78,10 +78,11 @@ class SimpleAssistant(Assistant):
 
                 tool_calls = await self.toolkit.handle_tool_calls(message.tool_calls)
 
-                # All messages must have unique IDs
-                for tool_call in tool_calls:
-                    tool_call["id"] = str(uuid.uuid4())
-                    tool_call["name"] = self.name
+                # TODO following code block is disabled temporaryly, it's broken
+                # # All messages must have unique IDs
+                # for tool_call in tool_calls:
+                #     tool_call["id"] = str(uuid.uuid4())
+                #     tool_call["name"] = self.name
 
                 messages.extend(tool_calls)
                 chat.state.messages.extend(tool_calls)
