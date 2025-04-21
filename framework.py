@@ -3,8 +3,6 @@ import time
 import uuid
 from datetime import datetime
 from io import StringIO
-
-# from io import StringIO  # TODO use StringIO to accumulate message content and function arguments
 from typing import Any, Optional
 
 from litellm import CustomStreamWrapper, acompletion
