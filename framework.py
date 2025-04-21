@@ -1,4 +1,5 @@
 import os
+import re
 import time
 import uuid
 from datetime import datetime
@@ -59,8 +60,6 @@ class SimpleAssistant(Assistant):
             return chat.state.messages[-1]["content"]
 
     async def run(self, chat: Chat) -> None:
-        logger.debug(f"Completing chat...\nLast message: {chat.state.messages[-1]}")
-
         # These messages are sent to the LLM API, prefixed by the system prompt.
         messages = self._get_messages(chat)
 
@@ -134,16 +133,14 @@ class SimpleAssistant(Assistant):
         return prompt
 
     async def _complete(self, messages: list[Message], chat: Chat) -> Message:
+        # Replace invalid characters in assistant name
+        for message in messages:
+            if hasattr(message, "name"):
+                message["name"] = re.sub(r"[^a-zA-Z0-9-]", "_", message["name"])
+
         logger.info("Completing chat")
         for message in messages:
-            # TODO handle assistant names
-            # if "name" in message:
-            #     message["name"] = re.sub(r"[^a-zA-Z0-9_-]", "_", message["name"])
             logger.debug(message)
-
-        # TODO handle streaming of message; track state (which phase are we in?)
-        # Because we're streaming, we need to track whether a message has started or not.
-        # message_started = False
 
         kwargs = {}
         if self.toolkit:
@@ -179,6 +176,7 @@ class SimpleAssistant(Assistant):
             assert len(chunk.choices) == 1
             choice = chunk.choices[0]
             if choice.delta.tool_calls:
+                assert len(choice.delta.tool_calls) == 1
                 if id := choice.delta.tool_calls[0].id:
                     tool_call_id = id
                 if name := choice.delta.tool_calls[0].function.name:

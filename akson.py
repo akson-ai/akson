@@ -58,10 +58,10 @@ class Chat:
         self.state = state
 
         # Message that are put here will be sent over SSE by the web server.
-        self._queue: Optional[asyncio.Queue]
+        self._queue: Optional[asyncio.Queue] = None
 
         # HTTP request
-        self._request: Optional[Request]
+        self._request: Optional[Request] = None
 
         # These will be set by the Assistant.run() method.
         self._structured_output: Optional[BaseModel] = None
