@@ -56,7 +56,13 @@ class FunctionToolkit(Toolkit):
 
             result = func(**kwargs)
             logger.info("%s call result: %s", function.name, result)
-            messages.append({"role": "tool", "tool_call_id": tool_call.id, "content": json.dumps(result)})
+            messages.append(
+                Message(
+                    role="tool",  # type: ignore
+                    tool_call_id=tool_call.id,
+                    content=json.dumps(result),
+                )
+            )
 
         return messages
 
