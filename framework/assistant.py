@@ -3,21 +3,17 @@ import re
 import time
 import uuid
 from datetime import datetime
-from io import StringIO
-from typing import Any, Optional
+from typing import Optional
 
 from litellm import CustomStreamWrapper, acompletion
-from litellm.types.utils import (
-    ChatCompletionMessageToolCall,
-    Function,
-    Message,
-)
+from litellm.types.utils import Message
 from pydantic import BaseModel
 
 from akson import Assistant, Chat
 from logger import logger
 
 from .function_calling import FunctionToolkit, Toolkit
+from .streaming import MessageBuilder
 
 
 class SimpleAssistant(Assistant):
@@ -68,33 +64,31 @@ class SimpleAssistant(Assistant):
 
         message = await self._complete(messages, chat)
         messages.append(message)
+        chat.state.messages.append(message)
+        chat.state.save_to_disk()
 
         # We keep continue hitting OpenAI API until there are no more tool calls.
         current_turn = 0
-        if self.toolkit:
-            while message.tool_calls:
-                current_turn += 1
-                if current_turn > self.max_turns:
-                    raise Exception(f"Max turns ({self.max_turns}) exceeded")
+        while message.tool_calls:
+            current_turn += 1
+            if current_turn > self.max_turns:
+                raise Exception(f"Max turns ({self.max_turns}) exceeded")
 
-                tool_calls = await self.toolkit.handle_tool_calls(message.tool_calls)
+            assert self.toolkit
+            tool_calls = await self.toolkit.handle_tool_calls(message.tool_calls)
+            messages.extend(tool_calls)
+            chat.state.messages.extend(tool_calls)
+            chat.state.save_to_disk()
 
-                # TODO following code block is disabled temporaryly, it's broken
-                # # All messages must have unique IDs
-                # for tool_call in tool_calls:
-                #     tool_call["id"] = str(uuid.uuid4())
-                #     tool_call["name"] = self.name
+            for tool_call in tool_calls:
+                await chat.begin_message("tool")
+                assert tool_call.content
+                await chat.add_chunk(tool_call.content, "content")
 
-                messages.extend(tool_calls)
-                chat.state.messages.extend(tool_calls)
-                chat.state.save_to_disk()
-
-                for tool_call in tool_calls:
-                    await chat.begin_message("tool")
-                    await chat.add_chunk(tool_call["content"], "content")
-
-                message = await self._complete(messages, chat)
-                messages.append(message)
+            message = await self._complete(messages, chat)
+            messages.append(message)
+            chat.state.messages.append(message)
+            chat.state.save_to_disk()
 
     def _get_messages(self, chat: Chat) -> list[Message]:
         messages: list[Message] = []
@@ -166,59 +160,35 @@ class SimpleAssistant(Assistant):
         assert isinstance(response, CustomStreamWrapper)
         await chat.begin_message("assistant")
 
-        # We will aggregate delta messages and store them in these variables until we see a finish_reason.
+        # We will aggregate delta messages and store them in this variable until we see a finish_reason.
         # This is the only way to get the full content of the message.
         # We'll return this value at the end of the function.
-        message_role = None
-        message_content = StringIO()
-        tool_call_id = None
-        function_name = StringIO()
-        function_arguments = StringIO()
+        builder = MessageBuilder()
 
         async for chunk in response:
             assert chunk.__class__.__name__ == "ModelResponseStream"
             assert len(chunk.choices) == 1
             choice = chunk.choices[0]
-            if choice.delta.tool_calls:
-                assert len(choice.delta.tool_calls) == 1
-                if id := choice.delta.tool_calls[0].id:
-                    tool_call_id = id
-                if name := choice.delta.tool_calls[0].function.name:
-                    function_name.write(name)
-                    await chat.add_chunk(name, "function_name")
-                if args := choice.delta.tool_calls[0].function.arguments:
-                    function_arguments.write(args)
-                    await chat.add_chunk(args, "function_arguments")
-            if choice.delta.role:
-                message_role = choice.delta.role
-            if content := choice.delta.content:
-                message_content.write(content)
-                await chat.add_chunk(content, "content")
+            events = builder.write(choice.delta)
+            for event in events:
+                assert isinstance(event.name, str)
+                await chat.add_chunk(event.chunk, event.name)
 
             if finish_reason := choice.finish_reason:
-                message = Message(
-                    id=str(uuid.uuid4()),
-                    role=message_role,  # type: ignore
-                    content=message_content.getvalue(),
-                )
+                message = builder.getvalue()
                 if finish_reason == "stop":
                     if self.output_type:
-                        instance = self.output_type.model_validate_json(message_content.getvalue())
+                        assert isinstance(message.content, str)
+                        instance = self.output_type.model_validate_json(message.content)
                         await chat.set_structured_output(instance)
                 elif finish_reason == "tool_calls":
-                    message.tool_calls = [
-                        ChatCompletionMessageToolCall(
-                            id=tool_call_id,
-                            function=Function(
-                                name=function_name.getvalue(),
-                                arguments=function_arguments.getvalue(),
-                            ),
-                        )
-                    ]
+                    pass
                 else:
                     raise NotImplementedError(f"finish_reason={finish_reason}")
 
-                await chat.end_message()
+                # await chat.end_message()
+                # TODO id must be sent before to web client
+                message["id"] = str(uuid.uuid4())
                 return message
 
             # await chat.begin_message(category="info")

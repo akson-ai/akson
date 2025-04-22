@@ -2,12 +2,10 @@ import asyncio
 import os
 import uuid
 from abc import ABC, abstractmethod
-from io import StringIO
 from typing import Literal, Optional
 
 from fastapi import Request
 from litellm import Message
-from litellm.types.utils import ChatCompletionMessageToolCall, Function
 from pydantic import BaseModel
 from starlette.requests import ClientDisconnect
 
@@ -54,7 +52,8 @@ class Chat:
     """
 
     def __init__(self, *, state: ChatState):
-        # Persistent state of the chat that is loaded from disk
+        # Holds the chat's persistent state loaded from disk.
+        # Mainly includes the history of chat messages, which is a list of litellm.Message.
         self.state = state
 
         # Message that are put here will be sent over SSE by the web server.
@@ -73,9 +72,6 @@ class Chat:
 
     async def begin_message(self, role: Literal["assistant", "tool"]):
         self._message_id = str(uuid.uuid4())
-        self._content = StringIO()
-        self._function_name = StringIO()
-        self._function_arguments = StringIO()
         await self._queue_message(
             {
                 "type": "begin_message",
@@ -85,15 +81,7 @@ class Chat:
             }
         )
 
-    async def add_chunk(
-        self, chunk: str, location: Literal["content", "tool_call_id", "function_name", "function_arguments"]
-    ):
-        if location == "content":
-            self._content.write(chunk)
-        elif location == "function_name":
-            self._function_name.write(chunk)
-        elif location == "function_arguments":
-            self._function_arguments.write(chunk)
+    async def add_chunk(self, chunk: str, location: str):
         await self._queue_message(
             {
                 "type": "add_chunk",
@@ -101,25 +89,6 @@ class Chat:
                 "chunk": chunk,
             }
         )
-
-    async def end_message(self):
-        message = Message(
-            id=self._message_id,
-            role="assistant",
-            name=self.state.assistant,
-            content=self._content.getvalue(),
-        )
-        if self._function_name.getvalue():
-            message.tool_calls = [
-                ChatCompletionMessageToolCall(
-                    # TODO fix disappearing id
-                    function=Function(
-                        name=self._function_name.getvalue(),
-                        arguments=self._function_arguments.getvalue(),
-                    )
-                )
-            ]
-        self.state.messages.append(message)
 
     async def set_structured_output(self, output: BaseModel):
         self._structured_output = output
