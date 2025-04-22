@@ -225,14 +225,6 @@ class SimpleAssistant(Assistant):
 
         raise Exception("Stream ended unexpectedly")
 
-    async def _tool_kwargs(self) -> dict[str, Any]:
-        if not self.toolkit:
-            return {}
-        tools = await self.toolkit.get_tools()
-        if not tools:
-            return {}
-        return {"tools": tools, "tool_choice": "auto", "parallel_tool_calls": False}
-
     def add_example(self, user_message: str, response: BaseModel):
         """Add an example to the prompt."""
         self.examples.append((user_message, response))
