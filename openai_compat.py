@@ -13,7 +13,7 @@ from openai.types.chat import (
 from pydantic import BaseModel, Field
 from sse_starlette import EventSourceResponse
 
-from akson import Agent
+from akson import Assistant
 
 
 class Message(BaseModel):
@@ -65,7 +65,7 @@ def chat_streaming_chunk(response: ChatCompletionResponse, content: str, *, fini
     }
 
 
-def setup_routes(app: FastAPI, agents: dict[str, Agent]):
+def setup_routes(app: FastAPI, agents: dict[str, Assistant]):
     async def chat_completions(request: ChatCompletionRequest):
         if request.model == "gpt-4o":
             request.model = "ChatGPT"
