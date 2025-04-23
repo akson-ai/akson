@@ -16,8 +16,8 @@ from .function_calling import FunctionToolkit, Toolkit
 from .streaming import MessageBuilder
 
 
-class SimpleAssistant(Assistant):
-    """Simple assistant that uses OpenAI's chat API to generate responses."""
+class Agent(Assistant):
+    """Provides an Assistant implementation with a given system prompt and toolkit."""
 
     def __init__(
         self,
@@ -200,14 +200,14 @@ class SimpleAssistant(Assistant):
         self.examples.append((user_message, response))
 
 
-class DeclarativeAssistant(SimpleAssistant):
+class ClassAgent(Agent):
     """
     Declarative way to create an assistant.
     Class docstring is used as the prompt; methods are used as functions.
 
     Example:
 
-        class Mathematician(SimpleAssistant):
+        class Mathematician(ClassAgent):
             "You are a mathematician. You can answer questions about math."
 
             def add_two_numbers(self, a: int, b: int) -> int:
@@ -226,7 +226,7 @@ class DeclarativeAssistant(SimpleAssistant):
 
 if __name__ == "__main__":
 
-    class Mathematician(DeclarativeAssistant):
+    class Mathematician(ClassAgent):
         """
         You are a mathematician. You are good at math. You can answer questions about math.
         """

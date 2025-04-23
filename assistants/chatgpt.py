@@ -1,3 +1,3 @@
-from framework import SimpleAssistant
+from framework import Agent
 
-chatgpt = SimpleAssistant(name="ChatGPT", model="gpt-4.1")
+chatgpt = Agent(name="ChatGPT", model="gpt-4.1")

@@ -2,12 +2,12 @@ import os
 
 from exa_py import Exa as ExaClient
 
-from framework import DeclarativeAssistant
+from framework import ClassAgent
 
 client = ExaClient(os.environ["EXA_API_KEY"])
 
 
-class Exa(DeclarativeAssistant):
+class Exa(ClassAgent):
     """
     You are Exa assistant.
 

@@ -1,4 +1,4 @@
-from framework import FunctionToolkit, SimpleAssistant
+from framework import Agent, FunctionToolkit
 
 system_prompt = """
     You are a mathematician but you can only add two numbers.
@@ -23,4 +23,4 @@ def add_two_numbers(a: int, b: int) -> int:
 
 toolkit = FunctionToolkit([add_two_numbers])
 
-mathematician4 = SimpleAssistant(name="Mathematician 4", system_prompt=system_prompt, toolkit=toolkit)
+mathematician4 = Agent(name="Mathematician 4", system_prompt=system_prompt, toolkit=toolkit)

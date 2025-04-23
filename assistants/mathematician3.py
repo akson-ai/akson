@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from framework import FunctionToolkit, SimpleAssistant
+from framework import Agent, FunctionToolkit
 
 system_prompt = """
     You are a mathematician but you can only add two numbers.
@@ -30,7 +30,7 @@ class Result(BaseModel):
     answer: int
 
 
-mathematician3 = SimpleAssistant(
+mathematician3 = Agent(
     name="Mathematician3",
     system_prompt=system_prompt,
     toolkit=toolkit,

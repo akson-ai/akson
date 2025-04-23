@@ -113,11 +113,9 @@ class Chat:
             f"<assistant>{self.state.messages[1]['content']}</assistant>"
         )
         # TODO move update title logic into main.py
-        from framework import SimpleAssistant
+        from framework import Agent
 
-        titler = SimpleAssistant(
-            name="Titler", model="gpt-4.1-nano", system_prompt=instructions, output_type=TitleResponse
-        )
+        titler = Agent(name="Titler", model="gpt-4.1-nano", system_prompt=instructions, output_type=TitleResponse)
         response = await titler.respond(input)
         assert isinstance(response, TitleResponse)
         self.state.title = response.title

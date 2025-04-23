@@ -2,7 +2,7 @@ from typing import List, Optional
 
 from pydantic import BaseModel, Field
 
-from framework import DeclarativeAssistant
+from framework import ClassAgent
 
 
 class TemporalContext(BaseModel):
@@ -40,7 +40,7 @@ class SaveInfo(BaseModel):
     follow_up_topics: Optional[List[str]] = Field(None, description="Areas to explore further")
 
 
-class Therapist(DeclarativeAssistant):
+class Therapist(ClassAgent):
     """
     You are a specialized AI assistant focused on personal development, self-reflection,
     and life history documentation.

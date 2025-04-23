@@ -4,7 +4,7 @@ import time
 import putiopy
 import requests
 
-from framework import DeclarativeAssistant
+from framework import ClassAgent
 
 PUTIO_TOKEN = os.environ["PUTIO_TOKEN"]
 
@@ -16,7 +16,7 @@ JACKETT_URL = f"https://{JACKETT_DOMAIN}/api/v2.0/indexers/all/results?apikey={J
 client = putiopy.Client(PUTIO_TOKEN)
 
 
-class MovieAssistant(DeclarativeAssistant):
+class MovieAssistant(ClassAgent):
     """
     # Role
     You are a helpful assistant that helps people to search for videos on the Internet.

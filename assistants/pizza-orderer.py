@@ -1,6 +1,6 @@
-from framework import MCPToolkit, SimpleAssistant
+from framework import Agent, MCPToolkit
 
-pizza_orderer = SimpleAssistant(
+pizza_orderer = Agent(
     name="Pizza Orderer",
     system_prompt="You are an AI assistant that can order pizza over the phone.",
     toolkit=MCPToolkit(

@@ -1,7 +1,7 @@
-from framework import DeclarativeAssistant
+from framework import ClassAgent
 
 
-class Mathematician(DeclarativeAssistant):
+class Mathematician(ClassAgent):
     """
     You are a mathematician but you can only add two numbers.
     Refuse operations other than addition and substraction.

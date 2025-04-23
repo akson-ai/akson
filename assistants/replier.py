@@ -1,4 +1,4 @@
-from framework import SimpleAssistant
+from framework import Agent
 
 system_prompt = """
 You are a helpful assistant that drafts reply messages. The user will provide you with:
@@ -22,4 +22,4 @@ Do not:
 Simply provide the reply text as if the user is going to copy and paste it directly into their messaging platform.
 """
 
-replier = SimpleAssistant(name="Replier", system_prompt=system_prompt)
+replier = Agent(name="Replier", system_prompt=system_prompt)

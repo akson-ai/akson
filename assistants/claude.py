@@ -1,3 +1,3 @@
-from framework import SimpleAssistant
+from framework import Agent
 
-claude = SimpleAssistant(name="Claude", model="claude-3-7-sonnet-latest")
+claude = Agent(name="Claude", model="claude-3-7-sonnet-latest")
