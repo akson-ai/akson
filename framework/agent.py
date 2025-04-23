@@ -203,25 +203,29 @@ class Agent(Assistant):
 class ClassAgent(Agent):
     """
     Declarative way to create an assistant.
-    Class docstring is used as the prompt; methods are used as functions.
+
+    - Class docstring becomes system prompt.
+    - Class attributes are passed to Agent constructor.
+    - Methods become function tools.
 
     Example:
 
         class Mathematician(ClassAgent):
-            "You are a mathematician. You can answer questions about math."
+            "You can answer questions about math. Use provided function to add two numbers."
+
+            model = "claude-3-7-sonnet-latest"
 
             def add_two_numbers(self, a: int, b: int) -> int:
                 return a + b
     """
 
-    model = os.environ["DEFAULT_MODEL"]
-
     def __init__(self):
         name = self.__class__.__name__
         system_prompt = self.__doc__ or ""
-        functions = [getattr(self, name) for name, func in self.__class__.__dict__.items() if callable(func)]
-        toolkit = FunctionToolkit(functions)
-        super().__init__(name=name, model=self.model, system_prompt=system_prompt, toolkit=toolkit)
+        toolkit = FunctionToolkit([val for val in self.__class__.__dict__.values() if callable(val)])
+        is_member = lambda x: not x[0].startswith("_") and not callable(x[1]) and not isinstance(x[1], property)
+        kwargs = dict(filter(is_member, self.__class__.__dict__.items()))
+        super().__init__(name=name, system_prompt=system_prompt, toolkit=toolkit, **kwargs)
 
 
 if __name__ == "__main__":
