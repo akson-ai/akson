@@ -62,10 +62,13 @@ class Agent(Assistant):
         # These messages are sent to the LLM API, prefixed by the system prompt.
         messages = self._get_messages(chat)
 
+        def append_messages(message: Message):
+            messages.append(message)
+            chat.state.messages.append(message)
+            chat.state.save_to_disk()
+
         message = await self._complete(messages, chat)
-        messages.append(message)
-        chat.state.messages.append(message)
-        chat.state.save_to_disk()
+        append_messages(message)
 
         # We keep continue hitting OpenAI API until there are no more tool calls.
         current_turn = 0
@@ -76,19 +79,14 @@ class Agent(Assistant):
 
             assert self.toolkit
             tool_calls = await self.toolkit.handle_tool_calls(message.tool_calls)
-            messages.extend(tool_calls)
-            chat.state.messages.extend(tool_calls)
-            chat.state.save_to_disk()
-
             for tool_call in tool_calls:
+                append_messages(tool_call)
                 await chat.begin_message("tool")
                 assert tool_call.content
                 await chat.add_chunk(tool_call.content, "content")
 
             message = await self._complete(messages, chat)
-            messages.append(message)
-            chat.state.messages.append(message)
-            chat.state.save_to_disk()
+            append_messages(message)
 
     def _get_messages(self, chat: Chat) -> list[Message]:
         messages: list[Message] = []
