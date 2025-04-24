@@ -200,10 +200,13 @@ class Agent(Assistant):
 
 class ClassAgent(Agent):
     """
-    Declarative way to create an assistant.
+    A base class for agents implemented as classes.
+    This provides an alternative method for defining an agent.
+    Directly constructing an `Agent` object without using this class is perfectly fine.
 
-    - Class docstring becomes system prompt.
-    - Class attributes are passed to Agent constructor.
+    How it works:
+    - Docstring becomes system prompt.
+    - Attributes are passed to `Agent` constructor.
     - Methods become function tools.
 
     Example:
@@ -224,38 +227,3 @@ class ClassAgent(Agent):
         is_member = lambda x: not x[0].startswith("_") and not callable(x[1]) and not isinstance(x[1], property)
         kwargs = dict(filter(is_member, self.__class__.__dict__.items()))
         super().__init__(name=name, system_prompt=system_prompt, toolkit=toolkit, **kwargs)
-
-
-if __name__ == "__main__":
-
-    class Mathematician(ClassAgent):
-        """
-        You are a mathematician. You are good at math. You can answer questions about math.
-        """
-
-        def add_two_numbers(self, a: int, b: int) -> int:
-            """
-            Add two numbers
-
-            Args:
-              a (int): The first number
-              b (int): The second number
-
-            Returns:
-              int: The sum of the two numbers
-            """
-            return a + b
-
-    chat = Chat.temp()
-    chat.state.messages.append(
-        Message(
-            id=str(uuid.uuid4()),
-            role="user",  # type: ignore
-            content="What is three plus one?",
-        )
-    )
-
-    mathematician = Mathematician()
-    message = mathematician.run(chat)
-
-    print("Response:", message)
