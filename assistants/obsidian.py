@@ -1,5 +1,6 @@
 from framework import Agent, MCPToolkit
 
+# TODO get vault from env var
 vault = "/Users/cenk/Library/Mobile Documents/iCloud~md~obsidian/Documents/my-vault"
 
 obsidian = Agent(
