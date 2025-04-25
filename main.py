@@ -162,7 +162,7 @@ async def send_message(
     except Exception as e:
         logger.error(f"Error handling message: {e}")
         await chat.begin_message("assistant")
-        await chat.add_chunk(str(e), "content")
+        await chat.add_chunk("content", str(e))
     finally:
         chat._request = None
         chat.state.save_to_disk()

@@ -79,7 +79,7 @@ class Agent(Assistant):
                 tool_call["name"] = self.name
                 append_messages(tool_call)
                 assert tool_call.content
-                await chat.add_chunk(tool_call.content, "content")
+                await chat.add_chunk("content", tool_call.content)
 
         # We start by sending the first message.
         message = await self._complete(messages, chat)
@@ -140,7 +140,7 @@ class Agent(Assistant):
             events = builder.write(choice.delta)
             for event in events:
                 assert isinstance(event.name, str)
-                await chat.add_chunk(event.chunk, event.name)
+                await chat.add_chunk(event.name, event.chunk)
 
             if finish_reason := choice.finish_reason:
                 message = builder.getvalue()
@@ -157,7 +157,7 @@ class Agent(Assistant):
                 # Every message must have an ID.
                 message["id"] = message_id
                 message["name"] = self.name
-                await chat.add_chunk(message_id, "id")
+                await chat.add_chunk("id", message_id)
                 return message
 
         raise Exception("Stream ended unexpectedly")
