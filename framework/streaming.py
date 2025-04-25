@@ -1,4 +1,5 @@
 from io import StringIO
+from typing import Literal
 
 from litellm.types.utils import (
     ChatCompletionMessageToolCall,
@@ -10,14 +11,16 @@ from pydantic import BaseModel
 
 
 class Event(BaseModel):
-    name: str
+    name: Literal["role", "content", "function_name", "function_arguments"]
     chunk: str
 
 
 class MessageBuilder:
     """A class for building a Message object from a stream of deltas. Usage is similar to io.StringIO."""
 
-    def __init__(self):
+    def __init__(self, id: str, name: str):
+        self.id = id
+        self.name = name
         self.values = Values(
             message_role=StrValue("role"),
             message_content=StrValue("content", streamable=True),
@@ -45,6 +48,8 @@ class MessageBuilder:
     def getvalue(self) -> Message:
         """Construct a Message object from the current state of the builder."""
         message = Message(
+            id=self.id,
+            name=self.name,
             role=self.values["message_role"],  # type: ignore
             content=self.values["message_content"],
         )

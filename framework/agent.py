@@ -126,12 +126,15 @@ class Agent(Assistant):
             **kwargs,
         )
         assert isinstance(response, CustomStreamWrapper)
+
+        # We start by sending a begin_message event to the web client.
+        # This will cause the web client to draw a new message box for the assistant.
         message_id = await chat.begin_message("assistant")
 
         # We will aggregate delta messages and store them in this variable until we see a finish_reason.
         # This is the only way to get the full content of the message.
         # We'll return this value at the end of the function.
-        builder = MessageBuilder()
+        builder = MessageBuilder(message_id, self.name)
 
         async for chunk in response:
             assert chunk.__class__.__name__ == "ModelResponseStream"
@@ -154,10 +157,6 @@ class Agent(Assistant):
                 else:
                     raise NotImplementedError(f"finish_reason={finish_reason}")
 
-                # Every message must have an ID.
-                message["id"] = message_id
-                message["name"] = self.name
-                await chat.add_chunk("id", message_id)
                 return message
 
         raise Exception("Stream ended unexpectedly")

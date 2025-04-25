@@ -85,7 +85,7 @@ class Chat:
         )
         return message_id
 
-    async def add_chunk(self, location: str, chunk: str):
+    async def add_chunk(self, location: Literal["role", "content", "function_name", "function_arguments"], chunk: str):
         await self._queue_message(
             {
                 "type": "add_chunk",
