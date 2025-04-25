@@ -69,6 +69,19 @@ class Agent(Assistant):
             chat.state.messages.append(message)
             chat.state.save_to_disk()
 
+        async def handle_tool_calls(message: Message):
+            assert self.toolkit
+            assert message.tool_calls
+            tool_calls = await self.toolkit.handle_tool_calls(message.tool_calls)
+            for tool_call in tool_calls:
+                message_id = await chat.begin_message("tool")
+                tool_call["id"] = message_id
+                tool_call["name"] = self.name
+                append_messages(tool_call)
+                assert tool_call.content
+                await chat.add_chunk(tool_call.content, "content")
+
+        # We start by sending the first message.
         message = await self._complete(messages, chat)
         append_messages(message)
 
@@ -79,16 +92,9 @@ class Agent(Assistant):
             if current_turn > self.max_turns:
                 raise Exception(f"Max turns ({self.max_turns}) exceeded")
 
-            assert self.toolkit
-            tool_calls = await self.toolkit.handle_tool_calls(message.tool_calls)
-            for tool_call in tool_calls:
-                message_id = await chat.begin_message("tool")
-                tool_call["id"] = message_id
-                tool_call["name"] = self.name
-                append_messages(tool_call)
-                assert tool_call.content
-                await chat.add_chunk(tool_call.content, "content")
+            await handle_tool_calls(message)
 
+            # Send messages with tool calls.
             message = await self._complete(messages, chat)
             append_messages(message)
 
