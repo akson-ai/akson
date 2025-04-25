@@ -1,6 +1,7 @@
 import asyncio
 import json
 import os
+import uuid
 from datetime import datetime
 
 from dotenv import load_dotenv
@@ -162,7 +163,18 @@ async def send_message(
     except Exception as e:
         logger.error(f"Error handling message: {e}")
         await chat.begin_message("assistant")
+        await chat.add_chunk("category", "error")
         await chat.add_chunk("content", str(e))
+        # TODO Message construction should be in one place (inside Chat)
+        chat.state.messages.append(
+            Message(
+                id=str(uuid.uuid4()),
+                role="assistant",  # type: ignore
+                name=assistant.name,
+                content=str(e),
+                category="error",
+            )
+        )
     finally:
         chat._request = None
         chat.state.save_to_disk()
