@@ -63,6 +63,8 @@ class Agent(Assistant):
         messages = self._get_messages(chat)
 
         def append_messages(message: Message):
+            assert message["id"]
+            assert message["name"]
             messages.append(message)
             chat.state.messages.append(message)
             chat.state.save_to_disk()
@@ -82,6 +84,7 @@ class Agent(Assistant):
             for tool_call in tool_calls:
                 message_id = await chat.begin_message("tool")
                 tool_call["id"] = message_id
+                tool_call["name"] = self.name
                 append_messages(tool_call)
                 assert tool_call.content
                 await chat.add_chunk(tool_call.content, "content")
@@ -147,6 +150,7 @@ class Agent(Assistant):
 
                 # Every message must have an ID.
                 message["id"] = message_id
+                message["name"] = self.name
                 await chat.add_chunk(message_id, "id")
                 return message
 
