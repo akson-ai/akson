@@ -89,46 +89,6 @@ class Agent(Assistant):
             message = await self._complete(messages, chat)
             append_messages(message)
 
-    def _get_messages(self, chat: Chat) -> list[Message]:
-        messages: list[Message] = []
-
-        messages.append(
-            Message(
-                role="system",  # type: ignore
-                content=self._get_system_prompt(),
-            )
-        )
-
-        for user_message, response in self.examples:
-            messages.extend(
-                [
-                    Message(
-                        role="system",  # type: ignore
-                        name="example_user",
-                        content=user_message,
-                    ),
-                    Message(
-                        role="system",  # type: ignore
-                        name="example_assistant",
-                        content=response.model_dump_json(),
-                    ),
-                ]
-            )
-
-        messages.extend(chat.state.messages)
-        return messages
-
-    def _get_system_prompt(self) -> str:
-        prompt = self.system_prompt or ""
-        if prompt:
-            prompt += "\n\n"
-
-        t = datetime.now().strftime("%A, %B %d, %Y at %I:%M:%S %p")
-        o = time.strftime("%z")  # Timezone offset
-        prompt += f"Today's date and time is {t} ({o})"
-
-        return prompt
-
     async def _complete(self, messages: list[Message], chat: Chat) -> Message:
         # Replace invalid characters in assistant name
         for message in messages:
@@ -191,6 +151,46 @@ class Agent(Assistant):
                 return message
 
         raise Exception("Stream ended unexpectedly")
+
+    def _get_messages(self, chat: Chat) -> list[Message]:
+        messages: list[Message] = []
+
+        messages.append(
+            Message(
+                role="system",  # type: ignore
+                content=self._get_system_prompt(),
+            )
+        )
+
+        for user_message, response in self.examples:
+            messages.extend(
+                [
+                    Message(
+                        role="system",  # type: ignore
+                        name="example_user",
+                        content=user_message,
+                    ),
+                    Message(
+                        role="system",  # type: ignore
+                        name="example_assistant",
+                        content=response.model_dump_json(),
+                    ),
+                ]
+            )
+
+        messages.extend(chat.state.messages)
+        return messages
+
+    def _get_system_prompt(self) -> str:
+        prompt = self.system_prompt or ""
+        if prompt:
+            prompt += "\n\n"
+
+        t = datetime.now().strftime("%A, %B %d, %Y at %I:%M:%S %p")
+        o = time.strftime("%z")  # Timezone offset
+        prompt += f"Today's date and time is {t} ({o})"
+
+        return prompt
 
     def add_example(self, user_message: str, response: BaseModel):
         """Add an example to the prompt."""
