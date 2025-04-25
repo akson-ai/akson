@@ -159,6 +159,10 @@ async def send_message(
             asyncio.create_task(chat._generate_title())
     except ClientDisconnect:
         logger.info("Client disconnected")
+    except Exception as e:
+        logger.error(f"Error handling message: {e}")
+        await chat.begin_message("assistant")
+        await chat.add_chunk(str(e), "content")
     finally:
         chat._request = None
         chat.state.save_to_disk()
