@@ -80,8 +80,9 @@ class Agent(Assistant):
             assert self.toolkit
             tool_calls = await self.toolkit.handle_tool_calls(message.tool_calls)
             for tool_call in tool_calls:
+                message_id = await chat.begin_message("tool")
+                tool_call["id"] = message_id
                 append_messages(tool_call)
-                await chat.begin_message("tool")
                 assert tool_call.content
                 await chat.add_chunk(tool_call.content, "content")
 
@@ -156,7 +157,7 @@ class Agent(Assistant):
             **kwargs,
         )
         assert isinstance(response, CustomStreamWrapper)
-        await chat.begin_message("assistant")
+        message_id = await chat.begin_message("assistant")
 
         # We will aggregate delta messages and store them in this variable until we see a finish_reason.
         # This is the only way to get the full content of the message.
@@ -184,12 +185,10 @@ class Agent(Assistant):
                 else:
                     raise NotImplementedError(f"finish_reason={finish_reason}")
 
-                # await chat.end_message()
-                # TODO id must be sent before to web client
-                message["id"] = str(uuid.uuid4())
+                # Every message must have an ID.
+                message["id"] = message_id
+                await chat.add_chunk(message_id, "id")
                 return message
-
-            # await chat.begin_message(category="info")
 
         raise Exception("Stream ended unexpectedly")
 

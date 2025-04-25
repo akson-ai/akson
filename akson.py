@@ -70,16 +70,20 @@ class Chat:
         state = ChatState(id="", messages=[], assistant="", title="")
         return cls(state=state)
 
-    async def begin_message(self, role: Literal["assistant", "tool"]):
-        self._message_id = str(uuid.uuid4())
+    async def begin_message(self, role: Literal["assistant", "tool"]) -> str:
+        # Generate a unique message ID.
+        # This ID is used to identify the message when client wants to delete it.
+        message_id = str(uuid.uuid4())
+
         await self._queue_message(
             {
                 "type": "begin_message",
-                "id": self._message_id,
+                "id": message_id,
                 "role": role,
                 "name": self.state.assistant,
             }
         )
+        return message_id
 
     async def add_chunk(self, chunk: str, location: str):
         await self._queue_message(

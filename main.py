@@ -159,7 +159,6 @@ async def send_message(
             asyncio.create_task(chat._generate_title())
     except ClientDisconnect:
         logger.info("Client disconnected")
-        await chat.end_message()
     finally:
         chat._request = None
         chat.state.save_to_disk()
