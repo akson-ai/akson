@@ -13,6 +13,7 @@ from sse_starlette.sse import EventSourceResponse
 from starlette.requests import ClientDisconnect
 
 from akson import Assistant, Chat, ChatState, Message
+from framework import Agent
 from loader import load_assistants
 from logger import logger
 
@@ -154,10 +155,7 @@ async def send_message(
         chat.state.messages.append(user_message)
 
         await assistant.run(chat)
-
-        # Update chat title asynchronously if needed
-        if not chat.state.title:
-            asyncio.create_task(chat._generate_title())
+        asyncio.create_task(update_title(chat))
     except ClientDisconnect:
         logger.info("Client disconnected")
     except Exception as e:
@@ -177,6 +175,29 @@ async def send_message(
     finally:
         chat._request = None
         chat.state.save_to_disk()
+
+
+async def update_title(self: Chat):
+    if self.state.title:
+        return
+
+    class TitleResponse(BaseModel):
+        title: str
+
+    instructions = """
+        You are a helpful summarizer.
+        Your input is the first 2 messages of a conversation.
+        Output a title for the conversation.
+    """
+    input = (
+        f"<user>{self.state.messages[0]['content']}</user>\n\n"
+        f"<assistant>{self.state.messages[1]['content']}</assistant>"
+    )
+    titler = Agent(name="Titler", model="gpt-4.1-nano", system_prompt=instructions, output_type=TitleResponse)
+    response = await titler.respond(input)
+    assert isinstance(response, TitleResponse)
+    self.state.title = response.title
+    await self._queue_message({"type": "update_title", "title": self.state.title})
 
 
 @app.delete("/{chat_id}/message/{message_id}")
