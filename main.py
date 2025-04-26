@@ -1,7 +1,6 @@
 import asyncio
 import json
 import os
-import uuid
 from datetime import datetime
 
 from dotenv import load_dotenv
@@ -160,12 +159,12 @@ async def send_message(
         logger.info("Client disconnected")
     except Exception as e:
         logger.error(f"Error handling message: {e}")
-        await chat.begin_message("assistant", category="error")
-        await chat.add_chunk("content", str(e))
         # TODO Message construction should be in one place (inside Chat)
+        message_id = await chat.begin_message("assistant", category="error")
+        await chat.add_chunk("content", str(e))
         chat.state.messages.append(
             Message(
-                id=str(uuid.uuid4()),
+                id=message_id,
                 role="assistant",  # type: ignore
                 name=assistant.name,
                 content=str(e),
