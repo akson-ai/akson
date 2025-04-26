@@ -1,5 +1,5 @@
 from io import StringIO
-from typing import Literal
+from typing import Literal, Optional
 
 from litellm.types.utils import (
     ChatCompletionMessageToolCall,
@@ -9,9 +9,12 @@ from litellm.types.utils import (
 )
 from pydantic import BaseModel
 
+# Allowed locations for streaming chunks
+EventType = Literal["content", "function_name", "function_arguments"]
+
 
 class Event(BaseModel):
-    name: Literal["role", "content", "function_name", "function_arguments"]
+    name: EventType
     chunk: str
 
 
@@ -22,7 +25,7 @@ class MessageBuilder:
         self.id = id
         self.name = name
         self.values = Values(
-            message_role=StrValue("role"),
+            message_role=StrValue(),
             message_content=StrValue("content", streamable=True),
             tool_call_id=StrValue(),
             tool_call_type=StrValue(),
@@ -70,8 +73,8 @@ class MessageBuilder:
 class StrValue:
     """Helper class for building a string value from a stream of chunks."""
 
-    def __init__(self, event_name: str | None = None, streamable: bool = False):
-        self.event_name = event_name
+    def __init__(self, event_name: Optional[EventType] = None, streamable: bool = False):
+        self.event_name: Optional[EventType] = event_name
         if streamable:
             self.str = StringIO()
         else:

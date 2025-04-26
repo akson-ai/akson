@@ -162,8 +162,7 @@ async def send_message(
         logger.info("Client disconnected")
     except Exception as e:
         logger.error(f"Error handling message: {e}")
-        await chat.begin_message("assistant")
-        await chat.add_chunk("category", "error")
+        await chat.begin_message("assistant", category="error")
         await chat.add_chunk("content", str(e))
         # TODO Message construction should be in one place (inside Chat)
         chat.state.messages.append(

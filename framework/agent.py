@@ -142,7 +142,6 @@ class Agent(Assistant):
             choice = chunk.choices[0]
             events = builder.write(choice.delta)
             for event in events:
-                assert isinstance(event.name, str)
                 await chat.add_chunk(event.name, event.chunk)
 
             if finish_reason := choice.finish_reason:

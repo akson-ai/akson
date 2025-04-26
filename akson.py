@@ -9,8 +9,6 @@ from litellm import Message
 from pydantic import BaseModel
 from starlette.requests import ClientDisconnect
 
-MessageCategory = Literal["info", "success", "warning", "error"]
-
 
 class ChatState(BaseModel):
     """Chat that can be saved and loaded from a file."""
@@ -70,7 +68,11 @@ class Chat:
         state = ChatState(id="", messages=[], assistant="", title="")
         return cls(state=state)
 
-    async def begin_message(self, role: Literal["assistant", "tool"]) -> str:
+    async def begin_message(
+        self,
+        role: Literal["assistant", "tool"],
+        category: Optional[Literal["info", "success", "warning", "error"]] = None,
+    ) -> str:
         # Generate a unique message ID.
         # This ID is used to identify the message when client wants to delete it.
         message_id = str(uuid.uuid4())
@@ -81,13 +83,12 @@ class Chat:
                 "id": message_id,
                 "role": role,
                 "name": self.state.assistant,
+                "category": category,
             }
         )
         return message_id
 
-    async def add_chunk(
-        self, location: Literal["role", "content", "function_name", "function_arguments", "category"], chunk: str
-    ):
+    async def add_chunk(self, location: Literal["content", "function_name", "function_arguments"], chunk: str):
         await self._queue_message(
             {
                 "type": "add_chunk",
