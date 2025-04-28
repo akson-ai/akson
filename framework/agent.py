@@ -72,14 +72,14 @@ class Agent(Assistant):
         async def handle_tool_calls(message: Message):
             assert self.toolkit
             assert message.tool_calls
-            tool_calls = await self.toolkit.handle_tool_calls(message.tool_calls)
-            for tool_call in tool_calls:
+            tool_messages = await self.toolkit.handle_tool_calls(message.tool_calls)
+            for tool_message in tool_messages:
                 message_id = await chat.begin_message("tool")
-                tool_call["id"] = message_id
-                tool_call["name"] = self.name
-                append_messages(tool_call)
-                assert tool_call.content
-                await chat.add_chunk("content", tool_call.content)
+                tool_message["id"] = message_id
+                tool_message["name"] = self.name
+                append_messages(tool_message)
+                assert tool_message.content
+                await chat.add_chunk("content", tool_message.content)
 
         # We start by sending the first message.
         message = await self._complete(messages, chat)
