@@ -2,13 +2,79 @@
 
 Welcome to Akson! We're building a modern, open-source platform that empowers developers to quickly prototype, develop, and run agentic AI assistants.
 
-## What is Akson?
+## What is Akson
 
 Akson is a comprehensive system designed to help developers rapidly create, test, and deploy agentic AI assistants. By combining a powerful API, a modern web interface, and a command-line tool, Akson streamlines the process of building and managing AI-driven agents. Our platform is modular, extensible, and developer-friendly, making it easy to customize assistants for your unique needs and iterate quickly on new ideas.
 
-## Projects
+## What You Can Do
 
-This mono-repository contains the following projects:
+Once the services are running, you can:
+- Interact with AI assistants through the web interface or CLI
+- Use the API to integrate assistants into your applications
+- Create and customize your own AI assistants
+
+## Getting Started
+
+### Prerequisites
+
+Before you begin, ensure you have the following installed:
+- [Docker Compose](https://docs.docker.com/compose/install/) (v2.0.0 or later)
+
+### Installation
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/akson-ai/akson.git
+   cd akson
+   ```
+
+2. Copy the environment file:
+   ```bash
+   cp api/.env.example api/.env
+   ```
+
+   Then, open `.env` and configure your API keys and other environment variables as needed.
+
+   > **Important**: You need to set up at least the `OPENAI_API_KEY` to use the basic ChatGPT assistant. You can get a new API key from [OpenAI's platform](https://platform.openai.com/api-keys).
+
+3. Start the services:
+   ```bash
+   docker compose up --build --watch
+   ```
+
+   The flags used in this command:
+   - `--build`: Forces Docker to rebuild the images before starting the containers, ensuring you have the latest code changes
+   - `--watch`: Enables watch mode, which automatically rebuilds and restarts containers when you make changes to the source code
+
+4. Access the services:
+   - Web Interface: [http://localhost:5173](http://localhost:5173)
+   - API: [http://localhost:8000](http://localhost:8000)
+
+5. (Optional) To run the CLI tool:
+   ```bash
+   docker compose run --build --rm cli
+   ```
+
+## Project Structure
+
+```
+akson/
+├── api/                  # Backend API service
+│   ├── assistants/       # Custom AI assistant implementations
+│   └── framework/        # Core framework components
+│
+├── web/                  # Frontend web application
+│   ├── src/              # React source code
+│   └── public/           # Static assets
+│
+├── cli/                  # Command-line interface
+│
+├── chats/                # Chat history and data storage
+│
+└── compose.yaml          # Docker Compose configuration
+```
+
+## Components
 
 ### [api](./api)
 The core backend service that powers Akson. Built with Python and FastAPI, it provides a flexible foundation for creating and managing AI assistants. One of its key features is the ability to add custom AI assistants, allowing you to tailor the platform to your specific needs.
@@ -34,72 +100,7 @@ A command-line interface tool that helps you manage and interact with your AI as
 - Python
 - Click for the CLI framework
 
-## Architecture
-
-### Chat-Based System
-Akson's architecture is built around chat-based interactions. Each conversation is uniquely identified and maintains its own message history. When a user initiates a conversation with an assistant, the backend API processes the request by invoking the assistant's `run` method with the corresponding Chat object. The assistant then processes the input and adds its response to the conversation's message history.
-
-### Development Setup
-Both the backend (FastAPI) and frontend (React) applications are configured to run in development mode, enabling features like hot reloading for rapid development cycles. This setup is optimized for development and prototyping, with production deployment considerations planned for future releases.
-
-## Project Structure
-
-```
-akson/
-├── api/                  # Backend API service
-│   ├── assistants/       # Custom AI assistant implementations
-│   └── framework/        # Core framework components
-│
-├── web/                  # Frontend web application
-│   ├── src/              # React source code
-│   └── public/           # Static assets
-│
-├── cli/                  # Command-line interface
-│
-├── chats/                # Chat history and data storage
-│
-└── compose.yaml          # Docker Compose configuration
-```
-
-## Getting Started
-
-### Prerequisites
-
-Before you begin, ensure you have the following installed:
-- [Docker Compose](https://docs.docker.com/compose/install/) (v2.0.0 or later)
-
-### Installation Steps
-
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/akson-ai/akson.git
-   cd akson
-   ```
-
-2. Copy the environment file:
-   ```bash
-   cp api/.env.example api/.env
-   ```
-
-   Then, open `.env` and configure your API keys and other environment variables as needed.
-
-   > **Important**: You need to set up at least the `OPENAI_API_KEY` to use the basic ChatGPT assistant. You can get a new API key from [OpenAI's platform](https://platform.openai.com/api-keys).
-
-3. Start the services:
-   ```bash
-   docker compose up --build --watch
-   ```
-
-4. Access the services:
-   - Web Interface: [http://localhost:5173](http://localhost:5173)
-   - API: [http://localhost:8000](http://localhost:8000)
-
-5. (Optional) To run the CLI tool:
-   ```bash
-   docker compose run --build --rm cli
-   ```
-
-## Terminology
+## Core Concepts
 
 ### Assistant
 An Assistant is a Python file that is placed in the [`api/assistants`](./api/assistants) folder. Each assistant implements the `run(chat: Chat) -> None` interface, which defines how the assistant processes and responds to messages. You can write a custom assistant by implementing this interface directly, giving you full control over the conversation flow and allowing you to send control messages to the frontend application.
@@ -113,18 +114,18 @@ An Agent is a class that implements Assistant's `run` method. It's the concrete 
 ### Chat
 A Chat object is passed to the `run` method of assistants. It represents the state of a conversation, which is persisted to disk, and provides methods for sending messages to the frontend application and managing the conversation flow.
 
-### Creating Your First Assistant
+## System Design
+
+### Chat-Based System
+Akson's architecture is built around chat-based interactions. Each conversation is uniquely identified and maintains its own message history. When a user initiates a conversation with an assistant, the backend API processes the request by invoking the assistant's `run` method with the corresponding Chat object. The assistant then processes the input and adds its response to the conversation's message history.
+
+### Development Setup
+Both the backend (FastAPI) and frontend (React) applications are configured to run in development mode, enabling features like hot reloading for rapid development cycles. This setup is optimized for development and prototyping, with production deployment considerations planned for future releases.
+
+## Creating Your First Assistant
 
 1. Write your AI assistant as a Python file and place it in the [`assistants`](./api/assistants) directory.
-
 2. Interact with your assistants through the web interface or the command-line interface.
-
-## What You Can Do
-
-Once the services are running, you can:
-- Interact with AI assistants through the web interface or CLI
-- Use the API to integrate assistants into your applications
-- Create and customize your own AI assistants
 
 ## Feedback & Suggestions
 
