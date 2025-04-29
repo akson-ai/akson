@@ -34,6 +34,14 @@ A command-line interface tool that helps you manage and interact with your AI as
 - Python
 - Click for the CLI framework
 
+## Architecture
+
+### Chat-Based System
+Akson's architecture is built around chat-based interactions. Each conversation is uniquely identified and maintains its own message history. When a user initiates a conversation with an assistant, the backend API processes the request by invoking the assistant's `run` method with the corresponding Chat object. The assistant then processes the input and adds its response to the conversation's message history.
+
+### Development Setup
+Both the backend (FastAPI) and frontend (React) applications are configured to run in development mode, enabling features like hot reloading for rapid development cycles. This setup is optimized for development and prototyping, with production deployment considerations planned for future releases.
+
 ## Project Structure
 
 ```
