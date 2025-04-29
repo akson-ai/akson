@@ -1,0 +1,47 @@
+name: akson
+services:
+  api:
+    build:
+      context: ./akson-api
+    develop:
+      watch:
+        - path: ./akson-api
+          action: sync
+          target: /app
+          ignore:
+            - .venv/
+        - path: ./akson-api/pyproject.toml
+          action: rebuild
+    ports:
+      - ${AKSON_API_PORT:-8000}:8000
+    volumes:
+      - ./chats:/app/chats
+    environment:
+      - ALLOW_ORIGINS=http://localhost:${AKSON_WEB_PORT:-5173}
+    env_file:
+      - ./akson-api/.env
+
+  web:
+    build:
+      context: ./akson-web
+    develop:
+      watch:
+        - path: ./akson-web
+          action: sync
+          target: /app
+          ignore:
+            - node_modules/
+        - path: ./askon-web/package.json
+          action: rebuild
+    ports:
+      - ${AKSON_WEB_PORT:-5173}:5173
+    environment:
+      - VITE_API_BASE_URL=http://localhost:${AKSON_API_PORT:-8000}
+
+  cli:
+    build:
+      context: ./akson-cli
+    profiles:
+      - cli
+    environment:
+      - AKSON_API_BASE_URL=http://api:${AKSON_API_PORT:-8000}
