@@ -91,9 +91,23 @@ Before you begin, ensure you have the following installed:
    docker compose run --build --rm cli
    ```
 
+## Terminology
+
+### Assistant
+An Assistant is a Python file that is placed in the [`api/assistants`](./api/assistants) folder. Each assistant implements the `run(chat: Chat) -> None` interface, which defines how the assistant processes and responds to messages. You can write a custom assistant by implementing this interface directly, giving you full control over the conversation flow and allowing you to send control messages to the frontend application.
+
+### Agent
+An Agent is a class that implements Assistant's `run` method. It's the concrete implementation of an assistant's behavior. Agents live in the same [`api/assistants`](./api/assistants) folder as other assistants. The Agent class provides a higher-level abstraction for creating assistants by specifying:
+- Agent name
+- Instructions
+- Tools
+
+### Chat
+A Chat object is passed to the `run` method of assistants. It represents the state of a conversation, which is persisted to disk, and provides methods for sending messages to the frontend application and managing the conversation flow.
+
 ### Creating Your First Assistant
 
-1. Write your AI assistant as a Python file and place it in the [assistants](./api/assistants) directory.
+1. Write your AI assistant as a Python file and place it in the [`assistants`](./api/assistants) directory.
 
 2. Interact with your assistants through the web interface or the command-line interface.
 
