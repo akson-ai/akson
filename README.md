@@ -1,58 +1,122 @@
-# Akson Compose
+# Akson
 
-## Overview
-Akson Compose is a Docker Compose configuration that brings together all Akson components into a single, easy-to-deploy package.
-This project makes it simple to get started with Akson by providing a unified setup for all services.
+Welcome to Akson! We're building a modern, open-source platform that empowers developers to quickly prototype, develop, and run agentic AI assistants.
 
-## Components
-This project includes the following Akson components:
-- [akson-api](https://github.com/akson-ai/akson-api): The core backend service
-- [akson-web](https://github.com/akson-ai/akson-web): The web interface
-- [akson-cli](https://github.com/akson-ai/akson-cli): The command-line interface
+## What is Akson?
 
-## Prerequisites
+Akson is a comprehensive system designed to help developers rapidly create, test, and deploy agentic AI assistants. By combining a powerful API, a modern web interface, and a command-line tool, Akson streamlines the process of building and managing AI-driven agents. Our platform is modular, extensible, and developer-friendly, making it easy to customize assistants for your unique needs and iterate quickly on new ideas.
+
+## Projects
+
+This mono-repository contains the following projects:
+
+### [api](./api)
+The core backend service that powers Akson. Built with Python and FastAPI, it provides a flexible foundation for creating and managing AI assistants. One of its key features is the ability to add custom AI assistants, allowing you to tailor the platform to your specific needs.
+
+**Technical Stack:**
+- Python
+- FastAPI for the API
+- LiteLLM for the LLM integration
+
+### [web](./web)
+A modern React-based web interface for Akson that provides an intuitive user experience for interacting with Akson's features through your browser.
+
+**Technical Stack:**
+- JavaScript
+- React for the frontend framework
+- Vite for fast development and building
+- DaisyUI for the UI components
+
+### [cli](./cli)
+A command-line interface tool that helps you manage and interact with your AI assistants directly from your terminal. Perfect for automation and quick access to your assistants.
+
+**Technical Stack:**
+- Python
+- Click for the CLI framework
+
+## Project Structure
+
+```
+akson/
+├── api/                  # Backend API service
+│   ├── assistants/       # Custom AI assistant implementations
+│   └── framework/        # Core framework components
+│
+├── web/                  # Frontend web application
+│   ├── src/              # React source code
+│   └── public/           # Static assets
+│
+├── cli/                  # Command-line interface
+│
+├── chats/                # Chat history and data storage
+│
+└── compose.yaml          # Docker Compose configuration
+```
+
+## Getting Started
+
+### Prerequisites
 
 Before you begin, ensure you have the following installed:
 - [Docker Compose](https://docs.docker.com/compose/install/) (v2.0.0 or later)
 
-## Getting Started
-
-Follow these steps to get Akson up and running:
+### Installation Steps
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/akson-ai/akson-compose.git
-   cd akson-compose
+   git clone https://github.com/akson-ai/akson.git
+   cd akson
    ```
 
-2. Initialize the submodules:
+2. Copy the environment file:
    ```bash
-   git submodule update --init
-   ```
-
-3. Copy the environment file:
-   ```bash
-   cp .env.example .env
+   cp api/.env.example api/.env
    ```
 
    Then, open `.env` and configure your API keys and other environment variables as needed.
 
-4. Start the services:
+   > **Important**: You need to set up at least the `OPENAI_API_KEY` to use the basic ChatGPT assistant. You can get a new API key from [OpenAI's platform](https://platform.openai.com/api-keys).
+
+3. Start the services:
    ```bash
    docker compose up --build --watch
    ```
 
-5. Access the services:
+4. Access the services:
    - Web Interface: [http://localhost:5173](http://localhost:5173)
    - API: [http://localhost:8000](http://localhost:8000)
 
-6. (Optional) To run the CLI tool:
+5. (Optional) To run the CLI tool:
    ```bash
    docker compose run --build --rm cli
    ```
+
+### Creating Your First Assistant
+
+1. Write your AI assistant as a Python file and place it in the [assistants](./api/assistants) directory.
+
+2. Interact with your assistants through the web interface or the command-line interface.
 
 ## What You Can Do
 
 Once the services are running, you can:
 - Interact with AI assistants through the web interface or CLI
 - Use the API to integrate assistants into your applications
+- Create and customize your own AI assistants
+- Manage and monitor your assistants' performance
+
+## Feedback & Suggestions
+
+While the project is not accepting code contributions at this time, feedback and suggestions are welcome! Feel free to:
+- Open [issues](https://github.com/akson-ai/akson/issues) for feature suggestions
+- Share ideas for potential use cases
+- Provide feedback on the current architecture and design
+- Discuss potential agent ideas
+
+## License
+
+Akson is open-source software licensed under the MIT License.
+
+---
+
+Made with ❤️ by the Akson team
