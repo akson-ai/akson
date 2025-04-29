@@ -117,7 +117,6 @@ Once the services are running, you can:
 - Interact with AI assistants through the web interface or CLI
 - Use the API to integrate assistants into your applications
 - Create and customize your own AI assistants
-- Manage and monitor your assistants' performance
 
 ## Feedback & Suggestions
 
