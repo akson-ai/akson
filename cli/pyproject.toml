@@ -1,0 +1,17 @@
+[project]
+name = "akson-cli"
+version = "0.1.0"
+description = "A CLI for akson"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "click>=8.1.8",
+    "httpx>=0.28.1",
+    "prompt-toolkit>=3.0.50",
+]
+
+[tool.black]
+line-length = 120
+
+[tool.isort]
+profile = "black"
