@@ -2,15 +2,15 @@ name: akson
 services:
   api:
     build:
-      context: ./akson-api
+      context: ./api
     develop:
       watch:
-        - path: ./akson-api
+        - path: ./api
           action: sync
           target: /app
           ignore:
             - .venv/
-        - path: ./akson-api/pyproject.toml
+        - path: ./api/pyproject.toml
           action: rebuild
     ports:
       - ${AKSON_API_PORT:-8000}:8000
@@ -19,14 +19,14 @@ services:
     environment:
       - ALLOW_ORIGINS=http://localhost:${AKSON_WEB_PORT:-5173}
     env_file:
-      - ./akson-api/.env
+      - ./api/.env
 
   web:
     build:
-      context: ./akson-web
+      context: ./web
     develop:
       watch:
-        - path: ./akson-web
+        - path: ./web
           action: sync
           target: /app
           ignore:
@@ -40,7 +40,7 @@ services:
 
   cli:
     build:
-      context: ./akson-cli
+      context: ./cli
     profiles:
       - cli
     environment:
