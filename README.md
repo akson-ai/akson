@@ -121,11 +121,14 @@ Once the services are running, you can:
 
 ## Feedback & Suggestions
 
-While the project is not accepting code contributions at this time, feedback and suggestions are welcome! Feel free to:
-- Open [issues](https://github.com/akson-ai/akson/issues) for feature suggestions
-- Share ideas for potential use cases
-- Provide feedback on the current architecture and design
-- Discuss potential agent ideas
+While the project is not accepting code contributions at this time, feedback and suggestions are welcome! Here's how you can contribute:
+
+- Open [GitHub issues](https://github.com/akson-ai/akson/issues) to report bugs or technical problems
+- Join [GitHub discussions](https://github.com/akson-ai/akson/discussions) to:
+  - Share ideas for potential use cases
+  - Provide feedback on the current architecture and design
+  - Discuss potential agent ideas
+  - Engage with the community
 
 ## License
 
