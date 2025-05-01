@@ -12,7 +12,7 @@ from pydantic import BaseModel
 from akson import Assistant, Chat
 from logger import logger
 
-from .function_calling import FunctionToolkit, Toolkit
+from .function_calling import Toolkit
 from .streaming import MessageBuilder
 
 
@@ -203,34 +203,3 @@ class Agent(Assistant):
     def add_example(self, user_message: str, response: BaseModel):
         """Add an example to the prompt."""
         self.examples.append((user_message, response))
-
-
-class ClassAgent(Agent):
-    """
-    A base class for agents implemented as classes.
-    This provides an alternative method for defining an agent.
-    Directly constructing an `Agent` object without using this class is perfectly fine.
-
-    How it works:
-    - Docstring becomes system prompt.
-    - Attributes are passed to `Agent` constructor.
-    - Methods become function tools.
-
-    Example:
-
-        class Mathematician(ClassAgent):
-            "You can answer questions about math. Use provided function to add two numbers."
-
-            model = "claude-3-7-sonnet-latest"
-
-            def add_two_numbers(self, a: int, b: int) -> int:
-                return a + b
-    """
-
-    def __init__(self):
-        name = self.__class__.__name__
-        system_prompt = self.__doc__ or ""
-        toolkit = FunctionToolkit([val for val in self.__class__.__dict__.values() if callable(val)])
-        is_member = lambda x: not x[0].startswith("_") and not callable(x[1]) and not isinstance(x[1], property)
-        kwargs = dict(filter(is_member, self.__class__.__dict__.items()))
-        super().__init__(name=name, system_prompt=system_prompt, toolkit=toolkit, **kwargs)

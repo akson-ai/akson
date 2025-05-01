@@ -2,7 +2,7 @@ from typing import List, Optional
 
 from pydantic import BaseModel, Field
 
-from framework import ClassAgent
+from framework import Agent, FunctionToolkit
 
 
 class TemporalContext(BaseModel):
@@ -40,8 +40,7 @@ class SaveInfo(BaseModel):
     follow_up_topics: Optional[List[str]] = Field(None, description="Areas to explore further")
 
 
-class Therapist(ClassAgent):
-    """
+system_prompt = """
     You are a specialized AI assistant focused on personal development, self-reflection,
     and life history documentation.
     Your goal is to help humans understand themselves better by engaging in meaningful conversations,
@@ -209,12 +208,16 @@ class Therapist(ClassAgent):
     Remember: Your role is to be a thoughtful, organized, and empathetic guide in the person's journey of
     self-discovery and documentation. Prioritize building trust and understanding while maintaining
     systematic record-keeping of their life story.
-    """
-
-    def save_info(self, info: SaveInfo):
-        print("Saving info...")
-        with open("life_history.jsonl", "a") as f:
-            f.write(f"{info.model_dump_json()}\n")
+"""
 
 
-therapist = Therapist()
+def save_info(info: SaveInfo):
+    print("Saving info...")
+    with open("life_history.jsonl", "a") as f:
+        f.write(f"{info.model_dump_json()}\n")
+
+
+therapist = Agent(
+    name="therapist",
+    toolkit=FunctionToolkit([save_info]),
+)

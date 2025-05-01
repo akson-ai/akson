@@ -1,4 +1,4 @@
-from .agent import Agent, ClassAgent
+from .agent import Agent
 from .function_calling import FunctionToolkit, MCPToolkit
 
-__all__ = ["ClassAgent", "Agent", "FunctionToolkit", "MCPToolkit"]
+__all__ = ["Agent", "FunctionToolkit", "MCPToolkit"]
