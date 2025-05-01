@@ -62,14 +62,13 @@ akson/
 ├── api/                  # Backend API service
 │   ├── assistants/       # Custom AI assistant implementations
 │   └── framework/        # Core framework components
+│   └── chats/            # Chat storage
 │
 ├── web/                  # Frontend web application
 │   ├── src/              # React source code
 │   └── public/           # Static assets
 │
 ├── cli/                  # Command-line interface
-│
-├── chats/                # Chat history and data storage
 │
 └── compose.yaml          # Docker Compose configuration
 ```

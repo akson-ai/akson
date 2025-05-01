@@ -15,7 +15,7 @@ services:
     ports:
       - ${AKSON_API_PORT:-8000}:8000
     volumes:
-      - ./chats:/app/chats
+      - ./api/chats:/app/chats
     environment:
       - ALLOW_ORIGINS=http://localhost:${AKSON_WEB_PORT:-5173}
     env_file:
