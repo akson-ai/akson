@@ -13,11 +13,11 @@ services:
         - path: ./api/pyproject.toml
           action: rebuild
     ports:
-      - ${AKSON_API_PORT:-8000}:8000
+      - ${AKSON_API_PORT}:8000
     volumes:
       - ./api/chats:/app/chats
     environment:
-      - ALLOW_ORIGINS=http://localhost:${AKSON_WEB_PORT:-5173}
+      - ALLOW_ORIGINS=${AKSON_WEB_EXTERNAL_URL}
     env_file:
       - ./api/.env
 
@@ -34,9 +34,9 @@ services:
         - path: ./askon-web/package.json
           action: rebuild
     ports:
-      - ${AKSON_WEB_PORT:-5173}:5173
+      - ${AKSON_WEB_PORT}:5173
     environment:
-      - VITE_API_BASE_URL=http://localhost:${AKSON_API_PORT:-8000}
+      - VITE_API_BASE_URL=${AKSON_API_EXTERNAL_URL}
 
   cli:
     build:
@@ -44,4 +44,4 @@ services:
     profiles:
       - cli
     environment:
-      - AKSON_API_BASE_URL=http://api:${AKSON_API_PORT:-8000}
+      - AKSON_API_BASE_URL=http://api:8000

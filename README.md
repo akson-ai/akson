@@ -28,14 +28,19 @@ Before you begin, ensure you have the following installed:
    cd akson
    ```
 
-2. Copy the environment file:
+2. Set up environment files:
+
+   a. First, copy the docker-compose environment file:
+   ```bash
+   cp .env.example .env
+   ```
+   The default values are suitable for running the stack on localhost. If you plan to host Akson under a custom domain, you'll need to modify the environment variables accordingly.
+
+   b. Then, copy the API environment file:
    ```bash
    cp api/.env.example api/.env
    ```
-
-   Then, open `.env` and configure your API keys and other environment variables as needed.
-
-   > **Important**: You need to set up at least the `OPENAI_API_KEY` to use the basic ChatGPT assistant. You can get a new API key from [OpenAI's platform](https://platform.openai.com/api-keys).
+   You'll need to set up at least the `OPENAI_API_KEY` in this file. You can get a new API key from [OpenAI's platform](https://platform.openai.com/api-keys).
 
 3. Start the services:
    ```bash
