@@ -1,3 +1,5 @@
+from pydantic import BaseModel
+
 from framework import Agent, FunctionToolkit
 
 system_prompt = """
@@ -23,4 +25,14 @@ def add_two_numbers(a: int, b: int) -> int:
 
 toolkit = FunctionToolkit([add_two_numbers])
 
-mathematician2 = Agent(name="Mathematician2", system_prompt=system_prompt, toolkit=toolkit)
+
+class Result(BaseModel):
+    answer: int
+
+
+mathematician2 = Agent(
+    name="Mathematician (Structured Output)",
+    system_prompt=system_prompt,
+    toolkit=toolkit,
+    output_type=Result,
+)
