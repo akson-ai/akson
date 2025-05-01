@@ -107,7 +107,7 @@ A command-line interface tool that helps you manage and interact with your AI as
 ## Core Concepts
 
 ### Assistant
-An Assistant is a Python file that is placed in the [`api/assistants`](./api/assistants) folder. Each assistant implements the `run(chat: Chat) -> None` interface, which defines how the assistant processes and responds to messages. You can write a custom assistant by implementing this interface directly, giving you full control over the conversation flow and allowing you to send control messages to the frontend application.
+An Assistant is a Python file that is placed in the [`api/assistants`](./api/assistants) folder. Each assistant implements the `def run(chat: Chat) -> None` interface, which defines how the assistant processes and responds to messages. You can write a custom assistant by implementing this interface directly, giving you full control over the conversation flow and allowing you to send control messages to the frontend application.
 
 ### Agent
 An Agent is a class that implements Assistant's `run` method. It's the concrete implementation of an assistant's behavior. Agents live in the same [`api/assistants`](./api/assistants) folder as other assistants. The Agent class provides a higher-level abstraction for creating assistants by specifying:
