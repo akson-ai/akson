@@ -1,6 +1,7 @@
 import { useSuspenseQuery, useMutation } from "@tanstack/react-query";
 import { API_BASE_URL } from "../constants";
-import { FaClockRotateLeft, FaCommentMedical } from "react-icons/fa6";
+import { PiChatsFill } from "react-icons/pi";
+import { RiChatNewFill } from "react-icons/ri";
 
 function Header({ chatId, selectedAssistant, onAssistantChange, createNewChat }) {
   const { data: assistants } = useSuspenseQuery({ queryKey: ["assistants"] });
@@ -19,7 +20,7 @@ function Header({ chatId, selectedAssistant, onAssistantChange, createNewChat })
       <div className="navbar-start">
         <div className="tooltip tooltip-right" data-tip="Chat history">
           <label htmlFor="drawer-toggle" className="btn btn-ghost btn-circle">
-            <FaClockRotateLeft size={20} />
+            <PiChatsFill size={20} />
           </label>
         </div>
       </div>
@@ -45,7 +46,7 @@ function Header({ chatId, selectedAssistant, onAssistantChange, createNewChat })
       <div className="navbar-end">
         <div className="tooltip tooltip-left" data-tip="New chat">
           <button className="btn btn-ghost btn-circle" onClick={createNewChat}>
-            <FaCommentMedical size={20} />
+            <RiChatNewFill size={20} />
           </button>
         </div>
       </div>
