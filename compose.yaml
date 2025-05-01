@@ -10,6 +10,7 @@ services:
           target: /app
           ignore:
             - .venv/
+            - chats/
         - path: ./api/pyproject.toml
           action: rebuild
     ports:
