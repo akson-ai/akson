@@ -16,7 +16,7 @@ function ChatApp({ chatId }) {
   const { data: state } = useSuspenseQuery({ queryKey: [chatId, "state"] });
 
   useEffect(() => {
-    document.title = state.title;
+    document.title = state.title || "New Chat";
     setSelectedAssistant(state.assistant);
     setMessages(
       state.messages.map((msg) => ({
