@@ -1,5 +1,5 @@
 [project]
-name = "akson"
+name = "akson-api"
 version = "0.1.0"
 description = "Personal Assistant"
 authors = [
