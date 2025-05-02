@@ -6,6 +6,22 @@ Welcome to Akson! We're building a modern, open-source platform that empowers de
 
 Akson is a comprehensive system designed to help developers rapidly create, test, and deploy agentic AI assistants. By combining a powerful API, a modern web interface, and a command-line tool, Akson streamlines the process of building and managing AI-driven agents. Our platform is modular, extensible, and developer-friendly, making it easy to customize assistants for your unique needs and iterate quickly on new ideas.
 
+## Our Vision
+
+Akson was born from a simple yet powerful idea: making AI assistants as easy to deploy as traditional web applications. Just like how Apache web server made it simple to serve PHP applications, Akson enables you to drop a Python file into the assistants folder and instantly have a working AI assistant accessible through our web interface.
+
+### Key Principles
+
+- **Simplicity First**: While some programming knowledge is helpful, Akson is designed to be accessible to anyone who can use a text editor and write basic Python code. Advanced features are available for those who need them, but the basic use case remains straightforward.
+
+- **Data Ownership**: We believe in complete data privacy and ownership. Unlike many AI platforms, Akson stores all conversations locally in JSON format, giving you full control over your data and the ability to export or process it as needed.
+
+- **Self-Hosted Freedom**: Modern personal computers are powerful enough to run AI assistants locally. Akson embraces this philosophy, allowing you to run everything on your own hardware without external dependencies.
+
+- **Rapid Prototyping**: Akson serves as an ideal platform for quick proof-of-concepts. Focus on implementing your agent's logic without worrying about frontend development or deployment infrastructure.
+
+- **Minimal Dependencies**: We maintain a lean codebase with minimal external dependencies. This makes the project easy to understand, fork, and customize for your specific needs.
+
 ## What You Can Do
 
 Once the services are running, you can:
