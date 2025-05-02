@@ -22,6 +22,16 @@ Akson was born from a simple yet powerful idea: making AI assistants as easy to 
 
 - **Minimal Dependencies**: We maintain a lean codebase with minimal external dependencies. This makes the project easy to understand, fork, and customize for your specific needs.
 
+## Features
+
+- 🚀 **Rapid Development**: Create AI assistants with just a Python file
+- 🔒 **Data Privacy**: All conversations stored locally in JSON format
+- 🏠 **Self-Hosted**: Run everything on your own hardware
+- 🛠️ **Extensible**: Easy to customize and extend
+- 🌐 **Web Interface**: Modern React-based UI
+- 📱 **CLI Support**: Command-line interface for automation
+- 🔌 **API Access**: Integrate assistants into your applications
+
 ## What You Can Do
 
 Once the services are running, you can:
