@@ -92,7 +92,7 @@ Before you begin, ensure you have the following installed:
 akson/
 ├── api/                  # Backend API service
 │   ├── assistants/       # Custom AI assistant implementations
-│   └── framework/        # Core framework components
+│   ├── framework/        # Core framework components
 │   └── chats/            # Chat storage
 │
 ├── web/                  # Frontend web application
