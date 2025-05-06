@@ -1,3 +1,7 @@
+"""
+akson package contains the interface that needs to be implemented by assistants.
+"""
+
 import asyncio
 import os
 import uuid
@@ -53,6 +57,7 @@ class Chat:
         # Holds the chat's persistent state loaded from disk.
         # Mainly includes the history of chat messages, which is a list of litellm.Message.
         self.state = state
+        """Holds the chat's persistent state loaded from disk."""
 
         # Message that are put here will be sent over SSE by the web server.
         self._queue: Optional[asyncio.Queue] = None
@@ -115,9 +120,17 @@ class Assistant(ABC):
 
     @property
     def name(self) -> str:
+        """
+        Name of the assistant. Visible in the UI.
+        """
         return self.__class__.__name__
 
     # TODO add description method to Assistant
 
     @abstractmethod
-    async def run(self, chat: Chat) -> None: ...
+    async def run(self, chat: Chat) -> None:
+        """
+        Run the assistant on the given chat.
+        This method will be called by the web server.
+        """
+        ...

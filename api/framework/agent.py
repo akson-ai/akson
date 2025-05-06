@@ -28,6 +28,9 @@ class Agent(Assistant):
         toolkit: Optional[Toolkit] = None,
         max_turns: int = 10,
     ):
+        """
+        Creates a new Agent.
+        """
         self.model = model
         self.system_prompt = system_prompt
         self.output_type = output_type

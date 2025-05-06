@@ -27,6 +27,13 @@ dependencies = [
     "uvicorn>=0.34.0",
 ]
 
+[dependency-groups]
+docs = [
+    "griffe-pydantic>=1.1.4",
+    "mkdocs-material>=9.6.12",
+    "mkdocstrings-python>=1.16.10",
+]
+
 [tool.black]
 line-length = 120
 

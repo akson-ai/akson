@@ -16,6 +16,7 @@ from logger import logger
 
 
 class Toolkit(ABC):
+    """Manages the list of tools to be passed into completion reqeust."""
 
     @abstractmethod
     async def get_tools(self) -> list[ChatCompletionToolParam]: ...

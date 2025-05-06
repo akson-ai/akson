@@ -1,0 +1,13 @@
+site_name: Akson Docs
+site_url: https://docs.akson.dev
+theme:
+  name: material
+plugins:
+- mkdocstrings:
+    default_handler: python
+    handlers:
+      python:
+        options:
+          extensions:
+          - griffe_pydantic:
+              schema: true
