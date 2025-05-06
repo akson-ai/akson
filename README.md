@@ -2,6 +2,8 @@
 
 Akson is an open-source platform for building and running AI assistants. The system combines an API, web interface, and command-line tool to build and manage AI-driven agents. The platform is modular and extensible, enabling customization and rapid iteration.
 
+![Akson Demo](demo.gif)
+
 ## Our Vision
 
 Akson was born from a simple yet powerful idea: making AI assistants as easy to deploy as traditional web applications. Just like how Apache web server made it simple to serve PHP applications, Akson enables you to drop a Python file into the assistants folder and instantly have a working AI assistant accessible through our web interface.
