@@ -1,16 +1,20 @@
 # Akson
 
-Akson is an open-source platform for building and running AI assistants. The system combines an API, web interface, and command-line tool to build and manage AI-driven agents. The platform is modular and extensible, enabling customization and rapid iteration.
+Akson is an open-source platform for building and running AI assistants.
+The system combines an API, web interface, and command-line tool to build and manage AI-driven agents.
+The platform is modular and extensible, enabling customization and rapid iteration.
 
 ![Akson Demo](demo.gif)
 
 ## Our Vision
 
-Akson was born from a simple yet powerful idea: making AI assistants as easy to deploy as traditional web applications. Just like how Apache web server made it simple to serve PHP applications, Akson enables you to drop a Python file into the assistants folder and instantly have a working AI assistant accessible through our web interface.
+Akson was born from a simple yet powerful idea: making AI assistants as easy to deploy as traditional web applications.
+Just like how Apache web server made it simple to serve PHP applications, Akson enables you to drop a Python file into the assistants folder and instantly have a working AI assistant accessible through our web interface.
 
 ### Key Principles
 
-- **Simplicity**: Akson is accessible to anyone who can use a text editor and write basic Python code. Advanced features are available for those who need them.
+- **Simplicity**: Akson is accessible to anyone who can use a text editor and write basic Python code.
+Advanced features are available for those who need them.
 
 - **Data Ownership**: Akson stores all conversations locally in JSON format, giving you control over your data and the ability to export or process it.
 
@@ -58,13 +62,15 @@ Before you begin, ensure you have the following installed:
    ```bash
    cp .env.example .env
    ```
-   The default values are suitable for running the stack on localhost. If you plan to host Akson under a custom domain, you'll need to modify the environment variables accordingly.
+   The default values are suitable for running the stack on localhost.
+   If you plan to host Akson under a custom domain, you'll need to modify the environment variables accordingly.
 
    b. Then, copy the API environment file:
    ```bash
    cp api/.env.example api/.env
    ```
-   You'll need to set up at least the `OPENAI_API_KEY` in this file. You can get a new API key from [OpenAI's platform](https://platform.openai.com/api-keys).
+   You'll need to set up at least the `OPENAI_API_KEY` in this file.
+   You can get a new API key from [OpenAI's platform](https://platform.openai.com/api-keys).
 
 3. Start the services:
    ```bash
@@ -105,7 +111,9 @@ akson/
 ## Components
 
 ### [api](./api)
-The core backend service that powers Akson. Built with Python and FastAPI, it provides a flexible foundation for creating and managing AI assistants. One of its key features is the ability to add custom AI assistants, allowing you to tailor the platform to your specific needs.
+The core backend service that powers Akson.
+Built with Python and FastAPI, it provides a flexible foundation for creating and managing AI assistants.
+One of its key features is the ability to add custom AI assistants, allowing you to tailor the platform to your specific needs.
 
 **Technical Stack:**
 - Python
@@ -122,7 +130,8 @@ A modern React-based web interface for Akson that provides an intuitive user exp
 - DaisyUI for the UI components
 
 ### [cli](./cli)
-A command-line interface tool that helps you manage and interact with your AI assistants directly from your terminal. Perfect for automation and quick access to your assistants.
+A command-line interface tool that helps you manage and interact with your AI assistants directly from your terminal.
+Perfect for automation and quick access to your assistants.
 
 **Technical Stack:**
 - Python
@@ -131,24 +140,34 @@ A command-line interface tool that helps you manage and interact with your AI as
 ## Core Concepts
 
 ### Assistant
-An Assistant is a Python file in the [`api/assistants`](./api/assistants) folder. Each assistant implements the `def run(chat: Chat) -> None` interface, which defines how the assistant processes and responds to messages. You can write a custom assistant by implementing this interface, giving you control over the conversation flow and allowing you to send control messages to the frontend application.
+An Assistant is a Python file in the [`api/assistants`](./api/assistants) folder.
+Each assistant implements the `def run(chat: Chat) -> None` interface, which defines how the assistant processes and responds to messages.
+You can write a custom assistant by implementing this interface, giving you control over the conversation flow and allowing you to send control messages to the frontend application.
 
 ### Agent
-An Agent is a class that implements Assistant's `run` method. It's the implementation of an assistant's behavior. Agents live in the [`api/assistants`](./api/assistants) folder. The Agent class provides an abstraction for creating assistants by specifying:
+An Agent is a class that implements Assistant's `run` method.
+It's the implementation of an assistant's behavior.
+Agents live in the [`api/assistants`](./api/assistants) folder.
+The Agent class provides an abstraction for creating assistants by specifying:
 - Agent name
 - Instructions
 - Tools
 
 ### Chat
-A Chat object is passed to the `run` method of assistants. It represents the state of a conversation, which is persisted to disk, and provides methods for sending messages to the frontend application and managing the conversation flow.
+A Chat object is passed to the `run` method of assistants.
+It represents the state of a conversation, which is persisted to disk, and provides methods for sending messages to the frontend application and managing the conversation flow.
 
 ## System Design
 
 ### Chat-Based System
-Akson's architecture is built around chat-based interactions. Each conversation is uniquely identified and maintains its own message history. When a user initiates a conversation with an assistant, the backend API processes the request by invoking the assistant's `run` method with the corresponding Chat object. The assistant then processes the input and adds its response to the conversation's message history.
+Akson's architecture is built around chat-based interactions.
+Each conversation is uniquely identified and maintains its own message history.
+When a user initiates a conversation with an assistant, the backend API processes the request by invoking the assistant's `run` method with the corresponding Chat object.
+The assistant then processes the input and adds its response to the conversation's message history.
 
 ### Development Setup
-Both the backend (FastAPI) and frontend (React) applications are configured to run in development mode, enabling features like hot reloading for rapid development cycles. This setup is optimized for development and prototyping, with production deployment considerations planned for future releases.
+Both the backend (FastAPI) and frontend (React) applications are configured to run in development mode, enabling features like hot reloading for rapid development cycles.
+This setup is optimized for development and prototyping, with production deployment considerations planned for future releases.
 
 ## Creating Your First Assistant
 
@@ -157,7 +176,8 @@ Both the backend (FastAPI) and frontend (React) applications are configured to r
 
 ## Feedback & Suggestions
 
-While the project is not accepting code contributions at this time, feedback and suggestions are welcome! Here's how you can contribute:
+While the project is not accepting code contributions at this time, feedback and suggestions are welcome!
+Here's how you can contribute:
 
 - Open [GitHub issues](https://github.com/akson-ai/akson/issues) to report bugs or technical problems
 - Join [GitHub discussions](https://github.com/akson-ai/akson/discussions) to:
