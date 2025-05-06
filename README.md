@@ -10,15 +10,15 @@ Akson was born from a simple yet powerful idea: making AI assistants as easy to 
 
 ### Key Principles
 
-- **Simplicity First**: While some programming knowledge is helpful, Akson is designed to be accessible to anyone who can use a text editor and write basic Python code. Advanced features are available for those who need them, but the basic use case remains straightforward.
+- **Simplicity**: Akson is accessible to anyone who can use a text editor and write basic Python code. Advanced features are available for those who need them.
 
-- **Data Ownership**: We believe in complete data privacy and ownership. Unlike many AI platforms, Akson stores all conversations locally in JSON format, giving you full control over your data and the ability to export or process it as needed.
+- **Data Ownership**: Akson stores all conversations locally in JSON format, giving you control over your data and the ability to export or process it.
 
-- **Self-Hosted Freedom**: Modern personal computers are powerful enough to run AI assistants locally. Akson embraces this philosophy, allowing you to run everything on your own hardware without external dependencies.
+- **Self-Hosted**: Akson runs on your hardware without external dependencies.
 
-- **Rapid Prototyping**: Akson serves as an ideal platform for quick proof-of-concepts. Focus on implementing your agent's logic without worrying about frontend development or deployment infrastructure.
+- **Rapid Prototyping**: Akson lets you implement agent logic without frontend development or deployment infrastructure.
 
-- **Minimal Dependencies**: We maintain a lean codebase with minimal external dependencies. This makes the project easy to understand, fork, and customize for your specific needs.
+- **Minimal Dependencies**: The codebase has minimal external dependencies, making it easy to understand, fork, and customize.
 
 ## Features
 
@@ -131,10 +131,10 @@ A command-line interface tool that helps you manage and interact with your AI as
 ## Core Concepts
 
 ### Assistant
-An Assistant is a Python file that is placed in the [`api/assistants`](./api/assistants) folder. Each assistant implements the `def run(chat: Chat) -> None` interface, which defines how the assistant processes and responds to messages. You can write a custom assistant by implementing this interface directly, giving you full control over the conversation flow and allowing you to send control messages to the frontend application.
+An Assistant is a Python file in the [`api/assistants`](./api/assistants) folder. Each assistant implements the `def run(chat: Chat) -> None` interface, which defines how the assistant processes and responds to messages. You can write a custom assistant by implementing this interface, giving you control over the conversation flow and allowing you to send control messages to the frontend application.
 
 ### Agent
-An Agent is a class that implements Assistant's `run` method. It's the concrete implementation of an assistant's behavior. Agents live in the same [`api/assistants`](./api/assistants) folder as other assistants. The Agent class provides a higher-level abstraction for creating assistants by specifying:
+An Agent is a class that implements Assistant's `run` method. It's the implementation of an assistant's behavior. Agents live in the [`api/assistants`](./api/assistants) folder. The Agent class provides an abstraction for creating assistants by specifying:
 - Agent name
 - Instructions
 - Tools
