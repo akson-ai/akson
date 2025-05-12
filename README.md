@@ -164,6 +164,15 @@ This setup is optimized for development and prototyping, with production deploym
 1. Write your AI assistant as a Python file and place it in the [`assistants`](./api/assistants) directory.
 2. Interact with your assistants through the web interface or the command-line interface.
 
+## Roadmap
+
+Here are the key features we're planning to add:
+
+- [ ] Share assistants with the internet
+- [ ] Share conversations with the internet (read-only)
+- [ ] Voice mode
+- [ ] WhatsApp/Telegram integration
+
 ## Feedback & Suggestions
 
 While the project is not accepting code contributions at this time, feedback and suggestions are welcome!
