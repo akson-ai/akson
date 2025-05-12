@@ -18,8 +18,6 @@ Advanced features are available for those who need them.
 
 - **Data Ownership**: Akson stores all conversations locally in JSON format, giving you control over your data and the ability to export or process it.
 
-- **Self-Hosted**: Akson runs on your hardware without external dependencies.
-
 - **Rapid Prototyping**: Akson lets you implement agent logic without frontend development or deployment infrastructure.
 
 - **Minimal Dependencies**: The codebase has minimal external dependencies, making it easy to understand, fork, and customize.
@@ -28,7 +26,6 @@ Advanced features are available for those who need them.
 
 - 🚀 **Rapid Development**: Create AI assistants with just a Python file
 - 🔒 **Data Privacy**: All conversations stored locally in JSON format
-- 🏠 **Self-Hosted**: Run everything on your own hardware
 - 🛠️ **Extensible**: Easy to customize and extend
 - 🌐 **Web Interface**: Modern React-based UI
 - 📱 **CLI Support**: Command-line interface for automation
