@@ -11,25 +11,18 @@ The platform is modular and extensible, enabling customization and rapid iterati
 Akson was born from a simple yet powerful idea: making AI assistants as easy to deploy as traditional web applications.
 Just like how Apache web server made it simple to serve PHP applications, Akson enables you to drop a Python file into the assistants folder and instantly have a working AI assistant accessible through our web interface.
 
-### Key Principles
+### Features
 
-- **Simplicity**: Akson is accessible to anyone who can use a text editor and write basic Python code.
-Advanced features are available for those who need them.
+- 🚀 **Rapid Development**: Create and prototype AI assistants with just a Python file, without needing frontend development or deployment infrastructure.
+Makes it accessible to anyone who can use a text editor and write basic Python code, while advanced features are available for those who need them.
 
-- **Data Ownership**: Akson stores all conversations locally in JSON format, giving you control over your data and the ability to export or process it.
+- 🔒 **Data Privacy & Ownership**: All conversations are stored locally in JSON format, giving you complete control over your data and the ability to export or process it.
 
-- **Rapid Prototyping**: Akson lets you implement agent logic without frontend development or deployment infrastructure.
+- 🛠️ **Extensibility**: The platform is modular and easy to customize, with minimal external dependencies making it simple to understand, fork, and modify.
 
-- **Minimal Dependencies**: The codebase has minimal external dependencies, making it easy to understand, fork, and customize.
+- 🌐 **Modern Interface**: Access your assistants through a beautiful React-based web interface or command-line tool.
 
-## Features
-
-- 🚀 **Rapid Development**: Create AI assistants with just a Python file
-- 🔒 **Data Privacy**: All conversations stored locally in JSON format
-- 🛠️ **Extensible**: Easy to customize and extend
-- 🌐 **Web Interface**: Modern React-based UI
-- 📱 **CLI Support**: Command-line interface for automation
-- 🔌 **API Access**: Integrate assistants into your applications
+- 🔌 **API Integration**: Seamlessly integrate assistants into your applications through our API.
 
 ## What You Can Do
 
