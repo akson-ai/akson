@@ -52,7 +52,7 @@ class FunctionToolkit(Toolkit):
 
             # Fill in default values
             for param in signature(func).parameters.values():
-                if param.default is not Parameter.empty:
+                if kwargs[param.name] is None and param.default is not Parameter.empty:
                     kwargs[param.name] = param.default
 
             result = func(**kwargs)
