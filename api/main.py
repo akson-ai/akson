@@ -4,7 +4,7 @@ import os
 from datetime import datetime
 
 from dotenv import load_dotenv
-from fastapi import Body, Depends, FastAPI, Request
+from fastapi import BackgroundTasks, Body, Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from sse_starlette.event import ServerSentEvent
@@ -132,6 +132,7 @@ def _get_assistant(message: MessageRequest) -> Assistant:
 async def send_message(
     request: Request,
     message: MessageRequest,
+    background_tasks: BackgroundTasks,
     assistant: Assistant = Depends(_get_assistant),
     chat: Chat = Depends(_get_chat),
 ):
@@ -154,7 +155,7 @@ async def send_message(
         chat.state.messages.append(user_message)
 
         await assistant.run(chat)
-        asyncio.create_task(update_title(chat))
+        background_tasks.add_task(update_title, chat)
     except ClientDisconnect:
         logger.info("Client disconnected")
     except Exception as e:
