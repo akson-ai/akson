@@ -135,3 +135,31 @@ async def test_function_with_multiple_return_types():
 
     result = await _test_function(return_list, "{}")
     assert result == "[1, 2, 3, 4, 5]"
+
+
+@pytest.mark.asyncio
+async def test_function_calling_with_coroutines():
+    async def async_return_string():
+        return "hello world"
+
+    async def async_return_int():
+        return 42
+
+    async def async_return_dict():
+        return {"status": "success", "code": 200}
+
+    async def async_with_args(a: int, b: int):
+        return a + b
+
+    result = await _test_function(async_return_string, "{}")
+    assert result == "hello world"
+
+    result = await _test_function(async_return_int, "{}")
+    assert result == "42"
+
+    result = await _test_function(async_return_dict, "{}")
+    assert '"status": "success"' in result
+    assert '"code": 200' in result
+
+    result = await _test_function(async_with_args, '{"a": 5, "b": 3}')
+    assert result == "8"

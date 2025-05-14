@@ -1,3 +1,4 @@
+import asyncio
 import json
 from abc import ABC, abstractmethod
 from inspect import Parameter, getdoc, signature
@@ -55,7 +56,11 @@ class FunctionToolkit(Toolkit):
                 if kwargs[param.name] is None and param.default is not Parameter.empty:
                     kwargs[param.name] = param.default
 
-            result = func(**kwargs)
+            if asyncio.iscoroutinefunction(func):
+                result = await func(**kwargs)
+            else:
+                result = func(**kwargs)
+
             logger.info("%s call result: %s", function.name, result)
             messages.append(
                 Message(
