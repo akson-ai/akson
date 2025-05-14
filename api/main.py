@@ -198,6 +198,8 @@ async def update_title(self: Chat):
     assert isinstance(response, TitleResponse)
     self.state.title = response.title
     await self._queue_message({"type": "update_title", "title": self.state.title})
+    # TODO Fix race condition
+    self.state.save_to_disk()
 
 
 @app.delete("/{chat_id}/message/{message_id}")
