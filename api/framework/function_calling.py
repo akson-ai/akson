@@ -61,7 +61,7 @@ class FunctionToolkit(Toolkit):
                 Message(
                     role="tool",  # type: ignore
                     tool_call_id=tool_call.id,
-                    content=json.dumps(result),
+                    content=result if isinstance(result, str) else json.dumps(result),
                 )
             )
 
@@ -86,10 +86,12 @@ def function_to_pydantic_model(func):
         type_hint = type_hints.get(param_name, str)
 
         # All fields are required. Optional parameters are emulated by using a union type with null.
+        default_value = ...
         if param.default is not Parameter.empty:
             type_hint |= None
+            default_value = param.default
 
-        fields[param_name] = (type_hint, Field(description=param_descriptions.get(param_name, None)))
+        fields[param_name] = (type_hint, Field(default=default_value, description=param_descriptions.get(param_name)))
 
     return create_model(func.__name__, __doc__=func_description, **fields)
 
