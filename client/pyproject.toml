@@ -1,0 +1,16 @@
+[project]
+name = "akson-client"
+version = "0.1.0"
+description = "Python client for Akson"
+readme = "README.md"
+authors = [
+    { name = "Cenk Altı", email = "cenkalti@gmail.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "httpx>=0.28.1",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
