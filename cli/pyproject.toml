@@ -5,10 +5,14 @@ description = "A CLI for akson"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "akson-client",
     "click>=8.1.8",
     "httpx>=0.28.1",
     "prompt-toolkit>=3.0.50",
 ]
+
+[tool.uv.sources]
+akson-client = { path = "../client" }
 
 [tool.black]
 line-length = 120

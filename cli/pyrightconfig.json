@@ -1,4 +1,7 @@
 {
-    "typeCheckingMode": "standard"
+    "typeCheckingMode": "standard",
+    "extraPaths": [
+        "../client/src",
+    ]
 }
 

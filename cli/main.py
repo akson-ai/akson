@@ -1,60 +1,27 @@
 import asyncio
-import json
 import os
 import uuid
 from pathlib import Path
 
 import click
-import httpx
+from akson_client import AksonClient
 from prompt_toolkit import PromptSession
 from prompt_toolkit.history import FileHistory
 from prompt_toolkit.patch_stdout import patch_stdout
 
 
-async def get_assistants(client: httpx.AsyncClient) -> list[str]:
-    response = await client.get(f"/assistants")
-    response.raise_for_status()
-    return [assistant["name"] for assistant in response.json()]
+async def stream_events(client: AksonClient, chat_id: str):
+    async for data in client.stream_events(chat_id):
+        match data:
+            case {"type": "begin_message"}:
+                print("\nAssistant: ", end="", flush=True)
+            case {"type": "add_chunk"}:
+                print(data["chunk"], end="", flush=True)
+            case {"type": "end_message"}:
+                print("\n")
 
 
-async def set_assistant(client: httpx.AsyncClient, chat_id: str, assistant: str) -> None:
-    response = await client.put(
-        f"/{chat_id}/assistant",
-        headers={"Content-Type": "text/plain"},
-        content=assistant.encode(),
-    )
-    response.raise_for_status()
-
-
-async def get_chat_state(client: httpx.AsyncClient, chat_id: str) -> dict:
-    response = await client.get(f"/{chat_id}/state")
-    response.raise_for_status()
-    return response.json()
-
-
-async def send_message(client: httpx.AsyncClient, chat_id: str, content: str, assistant: str) -> None:
-    response = await client.post(
-        f"/{chat_id}/message",
-        json={"content": content, "assistant": assistant, "id": str(uuid.uuid4())},
-    )
-    response.raise_for_status()
-
-
-async def stream_events(client: httpx.AsyncClient, chat_id: str):
-    async with client.stream("GET", f"/{chat_id}/events", timeout=None) as response:
-        async for line in response.aiter_lines():
-            if line.startswith("data: "):
-                data = json.loads(line[6:])
-                match data:
-                    case {"type": "begin_message"}:
-                        print("\nAssistant: ", end="", flush=True)
-                    case {"type": "add_chunk"}:
-                        print(data["chunk"], end="", flush=True)
-                    case {"type": "end_message"}:
-                        print("\n")
-
-
-async def chat_loop(client: httpx.AsyncClient, chat_id: str, assistant: str):
+async def chat_loop(client: AksonClient, chat_id: str, assistant: str):
     session = PromptSession(history=FileHistory(Path.home() / ".akson_chat_history.txt"))
     while True:
         try:
@@ -68,11 +35,11 @@ async def chat_loop(client: httpx.AsyncClient, chat_id: str, assistant: str):
             if user_input.startswith("/"):
                 command, *args = user_input.split(" ")
                 if command == "/assistants":
-                    assistants = await get_assistants(client)
+                    assistants = await client.get_assistants()
                     print(f"Available assistants: {', '.join(assistants)}\n")
                 elif command == "/assistant":
                     if args:
-                        await set_assistant(client, chat_id, args[0])
+                        await client.set_assistant(chat_id, args[0])
                         assistant = args[0]
                     print(f"Selected assistant: {assistant}\n")
                 else:
@@ -80,7 +47,7 @@ async def chat_loop(client: httpx.AsyncClient, chat_id: str, assistant: str):
 
                 continue
 
-            await send_message(client, chat_id, user_input, assistant)
+            await client.send_message(chat_id, user_input, assistant)
 
         except KeyboardInterrupt:
             continue
@@ -91,9 +58,9 @@ async def chat_loop(client: httpx.AsyncClient, chat_id: str, assistant: str):
             continue
 
 
-async def chat(chat_id: str, client: httpx.AsyncClient):
+async def chat(chat_id: str, client: AksonClient):
     # Get chat state
-    chat_state = await get_chat_state(client, chat_id)
+    chat_state = await client.get_chat_state(chat_id)
     assistant = chat_state["assistant"]
 
     # Print previous messages if they exist
@@ -126,11 +93,8 @@ async def main_async(chat_id: str | None, base_url: str):
         chat_id = str(uuid.uuid4())
         print(f"Using new chat ID: {chat_id}\n")
 
-    client = httpx.AsyncClient(base_url=base_url)
-    try:
-        await chat(chat_id, client)
-    finally:
-        await client.aclose()
+    client = AksonClient(base_url)
+    await chat(chat_id, client)
 
 
 @click.command()

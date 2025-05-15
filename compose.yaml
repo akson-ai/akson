@@ -41,7 +41,8 @@ services:
 
   cli:
     build:
-      context: ./cli
+      context: ./
+      dockerfile: ./cli/Dockerfile
     profiles:
       - cli
     environment:
