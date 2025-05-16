@@ -111,6 +111,7 @@ class StrValue:
 
 
 class Values:
+    """Helper class for generating a list of events from a stream of chunks."""
 
     def __init__(self, **kwargs: StrValue):
         self._values = kwargs
