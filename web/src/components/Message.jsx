@@ -69,9 +69,9 @@ function Message({ id, role, name, content, toolCalls, category, onDelete }) {
                   </div>
                   <div className="mt-1 space-y-1">
                     <div className="text-sm font-mono bg-base-200 p-2 rounded">
-                      <span className="text-primary">{toolCall.function.name}</span>
+                      <span className="text-primary">{toolCall.name}</span>
                       &nbsp;
-                      <span className="text-secondary">{toolCall.function.arguments}</span>
+                      <span className="text-secondary">{toolCall.arguments}</span>
                     </div>
                   </div>
                 </div>

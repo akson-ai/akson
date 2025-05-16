@@ -6,10 +6,10 @@ from datetime import datetime
 from typing import Optional
 
 from litellm import CustomStreamWrapper, acompletion
-from litellm.types.utils import Message
+from litellm.types.utils import Message as LitellmMessage
 from pydantic import BaseModel
 
-from akson import Assistant, Chat
+from akson import Assistant, Chat, Message
 from logger import logger
 
 from .function_calling import Toolkit
@@ -49,6 +49,7 @@ class Agent(Assistant):
             Message(
                 id=str(uuid.uuid4()),
                 role="user",  # type: ignore
+                name="You",
                 content=user_message,
             )
         )
@@ -57,7 +58,7 @@ class Agent(Assistant):
         if chat._structured_output:
             return chat._structured_output
         else:
-            return chat.state.messages[-1]["content"]
+            return chat.state.messages[-1].content
 
     async def run(self, chat: Chat) -> None:
         logger.info("Running assistant %s", self.name)
@@ -65,14 +66,14 @@ class Agent(Assistant):
         # These messages are sent to the LLM API, prefixed by the system prompt.
         messages = self._get_messages(chat)
 
-        def append_messages(message: Message):
+        def append_messages(message: LitellmMessage):
             assert message["id"]
             assert message["name"]
             messages.append(message)
-            chat.state.messages.append(message)
+            chat.state.messages.append(Message.from_litellm(message, name=message["name"]))
             chat.state.save_to_disk()
 
-        async def handle_tool_calls(message: Message):
+        async def handle_tool_calls(message: LitellmMessage):
             assert self.toolkit
             assert message.tool_calls
             tool_messages = await self.toolkit.handle_tool_calls(message.tool_calls)
@@ -101,7 +102,7 @@ class Agent(Assistant):
             message = await self._complete(messages, chat)
             append_messages(message)
 
-    async def _complete(self, messages: list[Message], chat: Chat) -> Message:
+    async def _complete(self, messages: list[LitellmMessage], chat: Chat) -> LitellmMessage:
         # Replace invalid characters in assistant name
         for message in messages:
             if hasattr(message, "name"):
@@ -163,11 +164,11 @@ class Agent(Assistant):
 
         raise Exception("Stream ended unexpectedly")
 
-    def _get_messages(self, chat: Chat) -> list[Message]:
-        messages: list[Message] = []
+    def _get_messages(self, chat: Chat) -> list[LitellmMessage]:
+        messages: list[LitellmMessage] = []
 
         messages.append(
-            Message(
+            LitellmMessage(
                 role="system",  # type: ignore
                 content=self._get_system_prompt(),
             )
@@ -176,12 +177,12 @@ class Agent(Assistant):
         for user_message, response in self.examples:
             messages.extend(
                 [
-                    Message(
+                    LitellmMessage(
                         role="system",  # type: ignore
                         name="example_user",
                         content=user_message,
                     ),
-                    Message(
+                    LitellmMessage(
                         role="system",  # type: ignore
                         name="example_assistant",
                         content=response.model_dump_json(),
@@ -189,7 +190,7 @@ class Agent(Assistant):
                 ]
             )
 
-        messages.extend(chat.state.messages)
+        messages.extend([message.to_litellm() for message in chat.state.messages])
         return messages
 
     def _get_system_prompt(self) -> str:

@@ -9,9 +9,61 @@ from abc import ABC, abstractmethod
 from typing import Literal, Optional
 
 from fastapi import Request
-from litellm import Message
+from litellm import ChatCompletionMessageToolCall as LitellmToolCall
+from litellm import Message as LitellmMessage
+from litellm.types.utils import Function
 from pydantic import BaseModel
 from starlette.requests import ClientDisconnect
+
+
+class ToolCall(BaseModel):
+    id: str
+    name: str  # Function name
+    arguments: str  # Serialized JSON
+
+    @classmethod
+    def from_litellm(cls, tool_call: LitellmToolCall):
+        return cls(
+            id=tool_call.id,
+            name=tool_call.function.name or "",
+            arguments=tool_call.function.arguments,
+        )
+
+    def to_litellm(self):
+        return LitellmToolCall(
+            id=self.id,
+            function=Function(name=self.name, arguments=self.arguments),
+        )
+
+
+class Message(BaseModel):
+    id: str
+    role: Literal["user", "assistant", "tool"]
+    name: str  # Name of the assistant
+    content: str
+    tool_calls: Optional[list[ToolCall]] = None  # Only set if role is "assistant"
+    tool_call_id: Optional[str] = None  # Only set if role is "tool"
+
+    @classmethod
+    def from_litellm(cls, message: LitellmMessage, *, name: str):
+        return cls(
+            id=str(uuid.uuid4()),
+            role=message.role,  # type: ignore
+            name=name,
+            content=message.content or "",
+            tool_calls=[ToolCall.from_litellm(tool_call) for tool_call in message.tool_calls or []] or None,
+            tool_call_id=message.get("tool_call_id"),
+        )
+
+    def to_litellm(self):
+        return LitellmMessage(
+            id=self.id,
+            role=self.role,  # type: ignore
+            name=self.name,
+            content=self.content,
+            tool_calls=[tool_call.to_litellm() for tool_call in self.tool_calls or []],
+            tool_call_id=self.tool_call_id,
+        )
 
 
 class ChatState(BaseModel):

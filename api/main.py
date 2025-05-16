@@ -169,7 +169,8 @@ async def send_message(
                 role="assistant",  # type: ignore
                 name=assistant.name,
                 content=str(e),
-                category="error",
+                # TODO bring back category
+                # category="error",
             )
         )
     finally:
@@ -190,8 +191,7 @@ async def update_title(self: Chat):
         Output a title for the conversation.
     """
     input = (
-        f"<user>{self.state.messages[0]['content']}</user>\n\n"
-        f"<assistant>{self.state.messages[1]['content']}</assistant>"
+        f"<user>{self.state.messages[0].content}</user>\n\n" f"<assistant>{self.state.messages[1].content}</assistant>"
     )
     titler = Agent(name="Titler", model="gpt-4.1-nano", system_prompt=instructions, output_type=TitleResponse)
     response = await titler.respond(input)
@@ -208,7 +208,7 @@ async def delete_message(
     chat: Chat = Depends(_get_chat),
 ):
     """Delete a message by its ID."""
-    chat.state.messages = [msg for msg in chat.state.messages if msg.get("id") != message_id]
+    chat.state.messages = [msg for msg in chat.state.messages if msg.id != message_id]
     chat.state.save_to_disk()
 
 

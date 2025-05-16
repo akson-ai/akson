@@ -30,7 +30,7 @@ export function useEvents(chatId, setMessages) {
           const message = structuredClone(prev[i]);
 
           if (!message.toolCalls && ["function_name", "function_arguments"].includes(data.location)) {
-            message.toolCalls = [{ function: { name: "", arguments: "" } }];
+            message.toolCalls = [{ name: "", arguments: "" }];
           }
 
           switch (data.location) {
@@ -38,10 +38,10 @@ export function useEvents(chatId, setMessages) {
               message.content += data.chunk;
               break;
             case "function_name":
-              message.toolCalls[0].function.name += data.chunk;
+              message.toolCalls[0].name += data.chunk;
               break;
             case "function_arguments":
-              message.toolCalls[0].function.arguments += data.chunk;
+              message.toolCalls[0].arguments += data.chunk;
               break;
           }
 
