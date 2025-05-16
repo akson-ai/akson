@@ -107,7 +107,7 @@ class Chat:
 
     def __init__(self, *, state: ChatState):
         # Holds the chat's persistent state loaded from disk.
-        # Mainly includes the history of chat messages, which is a list of litellm.Message.
+        # Mainly includes the history of chat messages, which is a list of Message.
         self.state = state
         """Holds the chat's persistent state loaded from disk."""
 
