@@ -21,7 +21,7 @@ function Message({ id, role, name, content, toolCalls, category, onDelete }) {
         </div>
       </div>
       <div className="chat-header">
-        <time className="text-xs opacity-50">{name}</time>
+        <time className="text-xs opacity-50">{name || "You"}</time>
       </div>
       <div className={`chat-bubble ${categoryTag} mt-1`}>
         {!(content || toolCalls) ? (

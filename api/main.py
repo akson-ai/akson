@@ -149,7 +149,6 @@ async def send_message(
         user_message = Message(
             id=message.id,
             role="user",  # type: ignore
-            name="You",
             content=message.content,
         )
         chat.state.messages.append(user_message)

@@ -39,7 +39,7 @@ class ToolCall(BaseModel):
 class Message(BaseModel):
     id: str
     role: Literal["user", "assistant", "tool"]
-    name: str  # Name of the assistant
+    name: Optional[str] = None  # Name of the assistant
     content: str
     tool_calls: Optional[list[ToolCall]] = None  # Only set if role is "assistant"
     tool_call_id: Optional[str] = None  # Only set if role is "tool"

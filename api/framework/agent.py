@@ -49,7 +49,6 @@ class Agent(Assistant):
             Message(
                 id=str(uuid.uuid4()),
                 role="user",  # type: ignore
-                name="You",
                 content=user_message,
             )
         )
@@ -106,7 +105,7 @@ class Agent(Assistant):
     async def _complete(self, messages: list[LitellmMessage], chat: Chat) -> LitellmMessage:
         # Replace invalid characters in assistant name
         for message in messages:
-            if hasattr(message, "name"):
+            if message.get("name"):
                 message["name"] = re.sub(r"[^a-zA-Z0-9-]", "_", message["name"])
 
         logger.info("Completing chat")
