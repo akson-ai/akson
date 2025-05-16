@@ -1,0 +1,20 @@
+[project]
+name = "akson-telegram-bot"
+version = "0.1.0"
+description = "Telegram bot for Akson"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "akson-client",
+    "python-dotenv>=1.0.1",
+    "python-telegram-bot>=22.0",
+]
+
+[tool.uv.sources]
+akson-client = { path = "../client" }
+
+[tool.black]
+line-length = 120
+
+[tool.isort]
+profile = "black"

@@ -47,3 +47,24 @@ services:
       - cli
     environment:
       - AKSON_API_BASE_URL=http://api:8000
+
+  telegram-bot:
+    build:
+      context: ./
+      dockerfile: ./telegram-bot/Dockerfile
+    develop:
+      watch:
+        - path: ./telegram-bot
+          action: sync
+          target: /app
+          ignore:
+            - .venv/
+        - path: ./telegram-bot/pyproject.toml
+          action: rebuild
+    # TODO Save chat ID
+    # volumes:
+    #   - ./api/chats:/app/chats
+    environment:
+      - AKSON_API_BASE_URL=http://api:8000
+    env_file:
+      - ./telegram-bot/.env
