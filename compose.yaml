@@ -55,7 +55,7 @@ services:
     develop:
       watch:
         - path: ./telegram-bot
-          action: sync
+          action: sync+restart
           target: /app
           ignore:
             - .venv/
