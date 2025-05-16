@@ -162,7 +162,7 @@ async def send_message(
         logger.error(f"Error handling message: {e}")
         # TODO Message construction should be in one place (inside Chat)
         message_id = await chat.begin_message("assistant", category="error")
-        await chat.add_chunk("content", str(e))
+        await chat.add_chunk("content", f"```{e}```")
         chat.state.messages.append(
             Message(
                 id=message_id,
