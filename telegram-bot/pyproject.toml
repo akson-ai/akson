@@ -2,7 +2,6 @@
 name = "akson-telegram-bot"
 version = "0.1.0"
 description = "Telegram bot for Akson"
-readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "akson-client",
