@@ -163,6 +163,7 @@ async def send_message(
         # TODO Message construction should be in one place (inside Chat)
         message_id = await chat.begin_message("assistant", category="error")
         await chat.add_chunk("content", f"```{e}```")
+        await chat.end_message()
         chat.state.messages.append(
             Message(
                 id=message_id,

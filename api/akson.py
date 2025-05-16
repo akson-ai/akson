@@ -154,6 +154,9 @@ class Chat:
             }
         )
 
+    async def end_message(self):
+        await self._queue_message({"type": "end_message"})
+
     async def set_structured_output(self, output: BaseModel):
         self._structured_output = output
 

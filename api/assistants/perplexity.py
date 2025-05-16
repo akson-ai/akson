@@ -33,10 +33,12 @@ class Perplexity(Assistant):
         assert message["role"] == "assistant"
         await chat.begin_message("assistant")
         await chat.add_chunk("content", message["content"])
+        await chat.end_message()
 
         citations = "\n\n".join(f"[{i}] {citation}" for i, citation in enumerate(data["citations"], 1))
         await chat.begin_message("assistant")
         await chat.add_chunk("content", citations)
+        await chat.end_message()
 
     # Takes care of "After the (optional) system message(s), user and assistant roles should be alternating." error.
     def _get_messages(self, chat: Chat) -> list[dict]:

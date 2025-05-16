@@ -84,6 +84,7 @@ class Agent(Assistant):
                 append_messages(tool_message)
                 assert tool_message.content
                 await chat.add_chunk("content", tool_message.content)
+                await chat.end_message()
 
         # We start by sending the first message.
         message = await self._complete(messages, chat)
@@ -160,6 +161,7 @@ class Agent(Assistant):
                 else:
                     raise NotImplementedError(f"finish_reason={finish_reason}")
 
+                await chat.end_message()
                 return message
 
         raise Exception("Stream ended unexpectedly")
