@@ -7,11 +7,12 @@ import httpx
 class AksonClient:
 
     def __init__(self, base_url: str):
-        self.client = httpx.AsyncClient(base_url=base_url)
+        self.client = httpx.AsyncClient(base_url=base_url, timeout=None)
 
     async def get_assistants(self) -> list[str]:
         response = await self.client.get(f"/assistants")
         response.raise_for_status()
+        # TODO return list of objects
         return [assistant["name"] for assistant in response.json()]
 
     async def set_assistant(self, chat_id: str, assistant: str) -> None:
@@ -27,12 +28,13 @@ class AksonClient:
         response.raise_for_status()
         return response.json()
 
-    async def send_message(self, chat_id: str, content: str, assistant: str) -> None:
+    async def send_message(self, chat_id: str, content: str, assistant: str) -> list:
         response = await self.client.post(
             f"/{chat_id}/message",
             json={"content": content, "assistant": assistant, "id": str(uuid.uuid4())},
         )
         response.raise_for_status()
+        return response.json()
 
     async def stream_events(self, chat_id: str):
         async with self.client.stream("GET", f"/{chat_id}/events", timeout=None) as response:
