@@ -1,5 +1,7 @@
 # Akson
 
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/akson-ai/akson)
+
 Akson is an open-source platform for building and running AI assistants.
 The system combines an API, web interface, and command-line tool to build and manage AI-driven agents.
 The platform is modular and extensible, enabling customization and rapid iteration.
