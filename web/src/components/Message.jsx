@@ -6,7 +6,7 @@ import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { FaTrash, FaCopy } from "react-icons/fa6";
 import { FaTools } from "react-icons/fa";
 
-function Message({ id, role, name, content, toolCalls, category, onDelete }) {
+function Message({ id, role, name, content, toolCall, category, onDelete }) {
   const [isHovered, setIsHovered] = useState(false);
   const categoryTag = category ? `chat-bubble-${category}` : "";
   return (
@@ -24,7 +24,7 @@ function Message({ id, role, name, content, toolCalls, category, onDelete }) {
         <time className="text-xs opacity-50">{name || "You"}</time>
       </div>
       <div className={`chat-bubble ${categoryTag} mt-1`}>
-        {!(content || toolCalls) ? (
+        {!(content || toolCall) ? (
           <div className="flex items-center">
             <div className="loading loading-spinner loading-sm mr-2"></div>
             <span>Thinking...</span>
@@ -60,22 +60,21 @@ function Message({ id, role, name, content, toolCalls, category, onDelete }) {
                 {content}
               </Markdown>
             </div>
-            {toolCalls &&
-              toolCalls.map((toolCall, index) => (
-                <div key={index} className="mt-2 border-t border-base-300 pt-2">
-                  <div className="flex items-center gap-2 text-sm opacity-70">
-                    <FaTools />
-                    <span>Tool call:</span>
-                  </div>
-                  <div className="mt-1 space-y-1">
-                    <div className="text-sm font-mono bg-base-200 p-2 rounded">
-                      <span className="text-primary">{toolCall.name}</span>
-                      &nbsp;
-                      <span className="text-secondary">{toolCall.arguments}</span>
-                    </div>
+            {toolCall && (
+              <div className="mt-2 border-t border-base-300 pt-2">
+                <div className="flex items-center gap-2 text-sm opacity-70">
+                  <FaTools />
+                  <span>Tool call:</span>
+                </div>
+                <div className="mt-1 space-y-1">
+                  <div className="text-sm font-mono bg-base-200 p-2 rounded">
+                    <span className="text-primary">{toolCall.name}</span>
+                    &nbsp;
+                    <span className="text-secondary">{toolCall.arguments}</span>
                   </div>
                 </div>
-              ))}
+              </div>
+            )}
           </div>
         )}
       </div>

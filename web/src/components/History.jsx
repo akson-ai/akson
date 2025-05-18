@@ -35,7 +35,7 @@ function History({ messages, onDeleteMessage }) {
           key={msg.id}
           role={msg.role}
           content={msg.content}
-          toolCalls={msg.toolCalls}
+          toolCall={msg.toolCall}
           name={msg.name}
           category={msg.category}
           onDelete={onDeleteMessage}

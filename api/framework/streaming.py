@@ -10,7 +10,7 @@ from litellm.types.utils import (
 from pydantic import BaseModel
 
 # Allowed locations for streaming chunks
-EventType = Literal["content", "function_name", "function_arguments"]
+EventType = Literal["content", "tool_call.id", "tool_call.name", "tool_call.arguments"]
 
 
 class Event(BaseModel):
@@ -27,10 +27,10 @@ class MessageBuilder:
         self.values = Values(
             message_role=StrValue(),
             message_content=StrValue("content", streamable=True),
-            tool_call_id=StrValue(),
+            tool_call_id=StrValue("tool_call.id"),
             tool_call_type=StrValue(),
-            function_name=StrValue("function_name", streamable=True),
-            function_arguments=StrValue("function_arguments", streamable=True),
+            function_name=StrValue("tool_call.name", streamable=True),
+            function_arguments=StrValue("tool_call.arguments", streamable=True),
         )
 
     def write(self, delta: Delta) -> list[Event]:
@@ -93,9 +93,10 @@ class StrValue:
         if chunk is None:
             return
         elif isinstance(self.str, StringIO):
-            self.str.write(chunk)
-            if self.event_name:
-                return Event(name=self.event_name, chunk=chunk)
+            if chunk:
+                self.str.write(chunk)
+                if self.event_name:
+                    return Event(name=self.event_name, chunk=chunk)
         elif self.str is not None and self.str != chunk:
             raise ValueError("Value is not streamable")
         else:

@@ -1,6 +1,7 @@
 import asyncio
 import json
 import os
+import traceback
 from datetime import datetime
 
 from dotenv import load_dotenv
@@ -128,7 +129,7 @@ def _get_assistant(message: MessageRequest) -> Assistant:
     return assistants[message.assistant]
 
 
-@app.post("/{chat_id}/message")
+@app.post("/{chat_id}/message", response_model=list[Message])
 async def send_message(
     request: Request,
     message: MessageRequest,
@@ -144,7 +145,7 @@ async def send_message(
             chat.state.save_to_disk()
             logger.info("Chat cleared")
             await chat._queue_message({"type": "clear"})
-            return
+            return []
 
         user_message = Message(
             id=message.id,
@@ -159,23 +160,18 @@ async def send_message(
         logger.info("Client disconnected")
     except Exception as e:
         logger.error(f"Error handling message: {e}")
-        # TODO Message construction should be in one place (inside Chat)
-        message_id = await chat.begin_message("assistant", category="error")
-        await chat.add_chunk("content", f"```{e}```")
-        await chat.end_message()
-        chat.state.messages.append(
-            Message(
-                id=message_id,
-                role="assistant",  # type: ignore
-                name=assistant.name,
-                content=str(e),
-                # TODO bring back category
-                # category="error",
-            )
-        )
+        traceback.print_exc()
+        reply = await chat.reply("assistant")
+        await reply.add_chunk(f"```{e.__class__.__name__}: {e}```")
+        # TODO add category "error"
+        await reply.end()
     finally:
         chat._request = None
         chat.state.save_to_disk()
+
+    new_messages = chat.new_messages
+    chat.new_messages = []
+    return new_messages
 
 
 async def update_title(self: Chat):

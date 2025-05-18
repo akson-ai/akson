@@ -41,27 +41,35 @@ class Message(BaseModel):
     role: Literal["user", "assistant", "tool"]
     name: Optional[str] = None  # Name of the assistant
     content: str
-    tool_calls: Optional[list[ToolCall]] = None  # Only set if role is "assistant"
+    tool_call: Optional[ToolCall] = None  # Only set if role is "assistant"
     tool_call_id: Optional[str] = None  # Only set if role is "tool"
 
     @classmethod
     def from_litellm(cls, message: LitellmMessage, *, name: str):
+        tool_call = None
+        if message.tool_calls:
+            assert len(message.tool_calls) == 1
+            tool_call = ToolCall.from_litellm(message.tool_calls[0])
         return cls(
             id=str(uuid.uuid4()),
             role=message.role,  # type: ignore
             name=name,
             content=message.content or "",
-            tool_calls=[ToolCall.from_litellm(tool_call) for tool_call in message.tool_calls or []] or None,
+            tool_call=tool_call,
             tool_call_id=message.get("tool_call_id"),
         )
 
     def to_litellm(self):
+        if self.tool_call:
+            tool_calls = [self.tool_call.to_litellm()]
+        else:
+            tool_calls = None
         return LitellmMessage(
             id=self.id,
             role=self.role,  # type: ignore
             name=self.name,
             content=self.content,
-            tool_calls=[tool_call.to_litellm() for tool_call in self.tool_calls or []],
+            tool_calls=tool_calls,
             tool_call_id=self.tool_call_id,
         )
 
@@ -98,6 +106,67 @@ class ChatState(BaseModel):
         return os.path.join("chats", f"{id}.json")
 
 
+class Reply:
+
+    def __init__(self, *, chat: "Chat", role: Literal["assistant", "tool"], name: str):
+        self.chat = chat
+        self.message = Message(
+            id=str(uuid.uuid4()),
+            role=role,
+            name=name,
+            content="",
+        )
+
+    # Need to have this method because constructors cannot be async
+    @classmethod
+    async def create(cls, *args, **kwargs) -> "Reply":
+        self = cls(*args, **kwargs)
+        await self.chat._queue_message(
+            {
+                "type": "begin_message",
+                "id": self.message.id,
+                "role": self.message.role,
+                "name": self.message.name,
+                # TODO send category on create reply
+                # "category": category,
+            }
+        )
+        return self
+
+    FieldType = Literal["content", "tool_call.id", "tool_call.name", "tool_call.arguments", "tool_call_id"]
+
+    async def add_chunk(self, chunk: str, *, field: FieldType = "content"):
+        print(f"Adding field: {field}, chunk: {chunk}")
+        if field == "content":
+            self.message.content += chunk
+        elif field == "tool_call_id":
+            self.message.tool_call_id = chunk
+        elif field.startswith("tool_call."):
+            if not self.message.tool_call:
+                self.message.tool_call = ToolCall(id="", name="", arguments="")
+            match field:
+                case "tool_call.id":
+                    self.message.tool_call.id = chunk
+                case "tool_call.name":
+                    self.message.tool_call.name += chunk
+                case "tool_call.arguments":
+                    self.message.tool_call.arguments += chunk
+        await self.chat._queue_message(
+            {
+                "type": "add_chunk",
+                # TODO rename as field
+                "location": field,
+                "chunk": chunk,
+            }
+        )
+
+    async def end(self):
+        await self.chat._queue_message({"type": "end_message"})
+        self.chat.new_messages.append(self.message)
+        self.chat.state.messages.append(self.message)
+        self.chat.state.save_to_disk()
+
+
 class Chat:
     """
     Chat holds state and handles sending and receiving messages.
@@ -120,42 +189,18 @@ class Chat:
         # These will be set by the Assistant.run() method.
         self._structured_output: Optional[BaseModel] = None
 
+        # Contains new messages generated during the agent run.
+        self.new_messages: list[Message] = []
+
     @classmethod
     def temp(cls):
         state = ChatState(id="", messages=[], assistant="", title="")
         return cls(state=state)
 
-    async def begin_message(
-        self,
-        role: Literal["assistant", "tool"],
-        category: Optional[Literal["info", "success", "warning", "error"]] = None,
-    ) -> str:
-        # Generate a unique message ID.
-        # This ID is used to identify the message when client wants to delete it.
-        message_id = str(uuid.uuid4())
-
-        await self._queue_message(
-            {
-                "type": "begin_message",
-                "id": message_id,
-                "role": role,
-                "name": self.state.assistant,
-                "category": category,
-            }
-        )
-        return message_id
-
-    async def add_chunk(self, location: Literal["content", "function_name", "function_arguments"], chunk: str):
-        await self._queue_message(
-            {
-                "type": "add_chunk",
-                "location": location,
-                "chunk": chunk,
-            }
-        )
-
-    async def end_message(self):
-        await self._queue_message({"type": "end_message"})
+    async def reply(self, role: Literal["assistant", "tool"]) -> Reply:
+        # category: Optional[Literal["info", "success", "warning", "error"]] = None,
+        # TODO name could be coming from the request context
+        return await Reply.create(chat=self, role=role, name=self.state.assistant)
 
     async def set_structured_output(self, output: BaseModel):
         self._structured_output = output

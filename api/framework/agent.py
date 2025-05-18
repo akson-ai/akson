@@ -65,29 +65,21 @@ class Agent(Assistant):
         # These messages are sent to the LLM API, prefixed by the system prompt.
         messages = self._get_messages(chat)
 
-        def append_messages(message: LitellmMessage):
-            assert message["id"]
-            assert message["name"]
-            messages.append(message)
-            chat.state.messages.append(Message.from_litellm(message, name=message["name"]))
-            chat.state.save_to_disk()
-
         async def handle_tool_calls(message: LitellmMessage):
             assert self.toolkit
             assert message.tool_calls
             tool_messages = await self.toolkit.handle_tool_calls(message.tool_calls)
             for tool_message in tool_messages:
-                message_id = await chat.begin_message("tool")
-                tool_message["id"] = message_id
-                tool_message["name"] = self.name
-                append_messages(tool_message)
                 assert tool_message.content
-                await chat.add_chunk("content", tool_message.content)
-                await chat.end_message()
+                messages.append(tool_message)
+                reply = await chat.reply("tool")
+                await reply.add_chunk(tool_message.content)
+                await reply.add_chunk(tool_message["tool_call_id"], field="tool_call_id")
+                await reply.end()
 
         # We start by sending the first message.
         message = await self._complete(messages, chat)
-        append_messages(message)
+        messages.append(message)
 
         # We keep continue hitting OpenAI API until there are no more tool calls.
         current_turn = 0
@@ -100,7 +92,7 @@ class Agent(Assistant):
 
             # Send messages with tool calls.
             message = await self._complete(messages, chat)
-            append_messages(message)
+            messages.append(message)
 
     async def _complete(self, messages: list[LitellmMessage], chat: Chat) -> LitellmMessage:
         # Replace invalid characters in assistant name
@@ -133,12 +125,12 @@ class Agent(Assistant):
 
         # We start by sending a begin_message event to the web client.
         # This will cause the web client to draw a new message box for the assistant.
-        message_id = await chat.begin_message("assistant")
+        reply = await chat.reply("assistant")
 
         # We will aggregate delta messages and store them in this variable until we see a finish_reason.
         # This is the only way to get the full content of the message.
         # We'll return this value at the end of the function.
-        builder = MessageBuilder(message_id, self.name)
+        builder = MessageBuilder(reply.message.id, self.name)
 
         async for chunk in response:
             assert chunk.__class__.__name__ == "ModelResponseStream"
@@ -146,7 +138,7 @@ class Agent(Assistant):
             choice = chunk.choices[0]
             events = builder.write(choice.delta)
             for event in events:
-                await chat.add_chunk(event.name, event.chunk)
+                await reply.add_chunk(event.chunk, field=event.name)
 
             if finish_reason := choice.finish_reason:
                 message = builder.getvalue()
@@ -156,11 +148,12 @@ class Agent(Assistant):
                         instance = self.output_type.model_validate_json(message.content)
                         await chat.set_structured_output(instance)
                 elif finish_reason == "tool_calls":
-                    pass
+                    assert message.tool_calls
+                    assert len(message.tool_calls) == 1
                 else:
                     raise NotImplementedError(f"finish_reason={finish_reason}")
 
-                await chat.end_message()
+                await reply.end()
                 return message
 
         raise Exception("Stream ended unexpectedly")

@@ -29,19 +29,19 @@ export function useEvents(chatId, setMessages) {
           const i = prev.length - 1;
           const message = structuredClone(prev[i]);
 
-          if (!message.toolCalls && ["function_name", "function_arguments"].includes(data.location)) {
-            message.toolCalls = [{ name: "", arguments: "" }];
+          if (!message.toolCall && ["tool_call.name", "tool_call.arguments"].includes(data.location)) {
+            message.toolCall = { name: "", arguments: "" };
           }
 
           switch (data.location) {
             case "content":
               message.content += data.chunk;
               break;
-            case "function_name":
-              message.toolCalls[0].name += data.chunk;
+            case "tool_call.name":
+              message.toolCall.name += data.chunk;
               break;
-            case "function_arguments":
-              message.toolCalls[0].arguments += data.chunk;
+            case "tool_call.arguments":
+              message.toolCall.arguments += data.chunk;
               break;
           }
 
