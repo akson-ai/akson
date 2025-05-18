@@ -32,6 +32,11 @@ Makes it accessible to anyone who can use a text editor and write basic Python c
 
 - 🌐 **Modern Interface**: Access your assistants through a beautiful React-based web interface or command-line tool.
 
+- 🤖 **Multiple Interfaces**: Interact with your assistants through various channels:
+  - Web interface for desktop users
+  - CLI for terminal users
+  - Telegram bot for mobile users
+
 - 🔌 **API Integration**: Seamlessly integrate assistants into your applications through our API.
 
 ## What You Can Do
@@ -105,6 +110,8 @@ akson/
 │
 ├── cli/                  # Command-line interface
 │
+├── telegram-bot/         # Telegram bot integration
+│
 └── compose.yaml          # Docker Compose configuration
 ```
 
@@ -136,6 +143,14 @@ Perfect for automation and quick access to your assistants.
 **Technical Stack:**
 - Python
 - Click for the CLI framework
+
+### [telegram-bot](./telegram-bot)
+A Telegram bot integration that allows users to interact with Akson assistants directly through Telegram.
+This component enables seamless communication with AI assistants on the go.
+
+**Technical Stack:**
+- Python
+- python-telegram-bot for Telegram API integration
 
 ## Core Concepts
 
@@ -181,7 +196,6 @@ Here are the key features we're planning to add:
 - [ ] Share assistants with the internet
 - [ ] Share conversations with the internet (read-only)
 - [ ] Voice mode
-- [ ] WhatsApp/Telegram integration
 
 ## Feedback & Suggestions
 
