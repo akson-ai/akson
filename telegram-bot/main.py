@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import os
 import uuid
@@ -28,8 +29,9 @@ logger = logging.getLogger(__name__)
 client = AksonClient(AKSON_API_BASE_URL)
 
 # Global state
+# TODO save state in telegram chat context
 akson_chat_id = str(uuid.uuid4())
-event_listener_task = None
+event_listener_task: asyncio.Task
 
 
 def restricted(func):
@@ -44,20 +46,22 @@ def restricted(func):
     return wrapped
 
 
-async def listen_events():
+async def listen_events(chat_id):
     logger.info("Listening for events...")
-    async for event in client.stream_events(akson_chat_id):
+    async for event in client.stream_events(chat_id):
         logger.info(f"Event: {event}")
 
 
 @restricted
-async def handle_new(update: Update, _: ContextTypes.DEFAULT_TYPE):
+async def handle_new(update: Update, context: ContextTypes.DEFAULT_TYPE):
     assert update.message
     logger.info("handle_new")
     global akson_chat_id
+    global event_listener_task
     akson_chat_id = str(uuid.uuid4())
     await update.message.reply_text(text=f"New chat created: {akson_chat_id}")
-    # TODO cancel event listener and start a new one
+    event_listener_task.cancel()
+    event_listener_task = context.application.create_task(listen_events(akson_chat_id))
 
 
 @restricted
@@ -76,7 +80,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def post_init(app):
     global event_listener_task
-    event_listener_task = app.create_task(listen_events())
+    event_listener_task = app.create_task(listen_events(akson_chat_id))
 
 
 application = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
