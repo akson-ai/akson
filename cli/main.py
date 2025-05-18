@@ -21,7 +21,7 @@ async def stream_events(client: AksonClient, chat_id: str):
                 print("\n")
 
 
-async def chat_loop(client: AksonClient, chat_id: str, assistant: str):
+async def chat_loop(client: AksonClient, chat_id: str):
     session = PromptSession(history=FileHistory(Path.home() / ".akson_chat_history.txt"))
     while True:
         try:
@@ -31,23 +31,7 @@ async def chat_loop(client: AksonClient, chat_id: str, assistant: str):
             if not user_input:
                 continue
 
-            # Handle slash commands
-            if user_input.startswith("/"):
-                command, *args = user_input.split(" ")
-                if command == "/assistants":
-                    assistants = await client.get_assistants()
-                    print(f"Available assistants: {', '.join(assistants)}\n")
-                elif command == "/assistant":
-                    if args:
-                        await client.set_assistant(chat_id, args[0])
-                        assistant = args[0]
-                    print(f"Selected assistant: {assistant}\n")
-                else:
-                    print("Unknown command\n")
-
-                continue
-
-            await client.send_message(chat_id, user_input, assistant)
+            await client.send_message(chat_id, user_input)
 
         except KeyboardInterrupt:
             continue
@@ -61,7 +45,6 @@ async def chat_loop(client: AksonClient, chat_id: str, assistant: str):
 async def chat(chat_id: str, client: AksonClient):
     # Get chat state
     chat_state = await client.get_chat_state(chat_id)
-    assistant = chat_state["assistant"]
 
     # Print previous messages if they exist
     if "messages" in chat_state:
@@ -73,7 +56,7 @@ async def chat(chat_id: str, client: AksonClient):
     # and that it doesn't destroy the output from the renderer.
     with patch_stdout():
         # Create tasks for both coroutines
-        chat_task = asyncio.create_task(chat_loop(client, chat_id, assistant))
+        chat_task = asyncio.create_task(chat_loop(client, chat_id))
         stream_task = asyncio.create_task(stream_events(client, chat_id))
 
         # Wait for chat loop to complete
