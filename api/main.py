@@ -139,7 +139,7 @@ async def set_assistant(assistant: str = Body(...), chat: Chat = Depends(_get_ch
 
 class MessageRequest(BaseModel):
     content: str = Body(...)
-    id: str = Body(default_factory=lambda: str(uuid.uuid4()))
+    id: str = Body(default_factory=lambda: str(uuid.uuid4()).replace("-", ""))
     assistant: Optional[str] = Body(default=None)
 
 
@@ -208,14 +208,14 @@ async def handle_command(chat: Chat, content: str):
             chat.state.messages.clear()
             logger.info("Chat cleared")
             await chat._queue_message({"type": "clear"})
-            return [Message(id=str(uuid.uuid4()), role="assistant", content="Chat cleared")]
+            return [Message(role="assistant", content="Chat cleared")]
         case "/assistant":
             if len(args) != 1:
                 raise Exception("Usage: /assistant <name>")
             assistant = registry.get_assistant(args[0])
             chat.state.assistant = assistant.name
             await chat._queue_message({"type": "update_assistant", "assistant": chat.state.assistant})
-            return [Message(id=str(uuid.uuid4()), role="assistant", content=f"Assistant set to {assistant.name}")]
+            return [Message(role="assistant", content=f"Assistant set to {assistant.name}")]
         case _:
             raise Exception("Unknown command")
 

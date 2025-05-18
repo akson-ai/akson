@@ -63,7 +63,7 @@ function ChatApp({ chatId }) {
   const sendMessage = () => {
     if (!inputText.trim()) return;
 
-    const messageId = crypto.randomUUID();
+    const messageId = crypto.randomUUID().toString().replace(/-/g, "");
 
     setMessages((prev) => [
       ...prev,

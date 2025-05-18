@@ -90,7 +90,7 @@ async def chat(chat_id: str, client: AksonClient):
 
 async def main_async(chat_id: str | None, base_url: str):
     if not chat_id:
-        chat_id = str(uuid.uuid4())
+        chat_id = str(uuid.uuid4()).replace("-", "")
         print(f"Using new chat ID: {chat_id}\n")
 
     client = AksonClient(base_url)

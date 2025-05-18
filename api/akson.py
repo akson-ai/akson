@@ -9,7 +9,7 @@ from abc import ABC, abstractmethod
 from typing import Literal, Optional
 
 from fastapi import Request
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from starlette.requests import ClientDisconnect
 
 
@@ -20,7 +20,7 @@ class ToolCall(BaseModel):
 
 
 class Message(BaseModel):
-    id: str
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()).replace("-", ""))
     role: Literal["user", "assistant", "tool"]
     name: Optional[str] = None  # Name of the assistant
     content: str
@@ -65,7 +65,6 @@ class Reply:
     def __init__(self, *, chat: "Chat", role: Literal["assistant", "tool"], name: str):
         self.chat = chat
         self.message = Message(
-            id=str(uuid.uuid4()),
             role=role,
             name=name,
             content="",

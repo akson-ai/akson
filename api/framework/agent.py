@@ -47,7 +47,6 @@ class Agent(Assistant):
         chat = Chat.temp()
         chat.state.messages.append(
             Message(
-                id=str(uuid.uuid4()),
                 role="user",
                 content=user_message,
             )
@@ -224,7 +223,6 @@ def message_from_litellm(message: LitellmMessage, *, name: str):
         assert len(message.tool_calls) == 1
         tool_call = tool_call_from_litellm(message.tool_calls[0])
     return Message(
-        id=str(uuid.uuid4()),
         role=message.role,  # type: ignore
         name=name,
         content=message.content or "",

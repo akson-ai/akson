@@ -10,7 +10,7 @@ if (
   window.location.pathname === "/" ||
   (window.location.pathname === "/chat" && !new URLSearchParams(window.location.search).get("id"))
 ) {
-  const newId = crypto.randomUUID();
+  const newId = crypto.randomUUID().toString().replace(/-/g, "");
   window.location.href = `/chat?id=${newId}`;
 }
 

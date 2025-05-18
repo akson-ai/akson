@@ -30,7 +30,7 @@ client = AksonClient(AKSON_API_BASE_URL)
 
 # Global state
 # TODO save state in telegram chat context
-akson_chat_id = str(uuid.uuid4())
+akson_chat_id = str(uuid.uuid4()).replace("-", "")
 event_listener_task: asyncio.Task
 
 
@@ -58,7 +58,7 @@ async def handle_new(update: Update, context: ContextTypes.DEFAULT_TYPE):
     logger.info("handle_new")
     global akson_chat_id
     global event_listener_task
-    akson_chat_id = str(uuid.uuid4())
+    akson_chat_id = str(uuid.uuid4()).replace("-", "")
     await update.message.reply_text(text=f"New chat created: {akson_chat_id}")
     event_listener_task.cancel()
     event_listener_task = context.application.create_task(listen_events(akson_chat_id))
