@@ -4,10 +4,14 @@ import os
 import traceback
 import uuid
 from datetime import datetime
+from typing import Optional
 
+import rich
 from dotenv import load_dotenv
 from fastapi import BackgroundTasks, Body, Depends, FastAPI, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from sse_starlette.event import ServerSentEvent
 from sse_starlette.sse import EventSourceResponse
@@ -16,7 +20,7 @@ from starlette.requests import ClientDisconnect
 from akson import Assistant, Chat, ChatState, Message
 from framework import Agent
 from logger import logger
-from registry import Registry
+from registry import Registry, UnknownAssistant
 
 load_dotenv()
 
@@ -50,6 +54,12 @@ def _get_chat(chat_id: str) -> Chat:
 
 
 app = FastAPI()
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(_: Request, exc: RequestValidationError):
+    rich.print(exc.errors())
+    return JSONResponse(str(exc), status_code=422)
 
 
 @app.get("/health")
@@ -129,12 +139,25 @@ async def set_assistant(assistant: str = Body(...), chat: Chat = Depends(_get_ch
 
 class MessageRequest(BaseModel):
     content: str = Body(...)
-    assistant: str = Body(...)
-    id: str = Body(...)
+    id: str = Body(default_factory=lambda: str(uuid.uuid4()))
+    assistant: Optional[str] = Body(default=None)
 
 
-def _get_assistant(message: MessageRequest) -> Assistant:
-    return registry.get_assistant(message.assistant)
+def _get_assistant(message: MessageRequest, chat: Chat = Depends(_get_chat)) -> Assistant:
+    assistant = chat.state.assistant
+    if message.assistant:
+        assistant = message.assistant
+    if not assistant:
+        assistant = default_assistant
+    return registry.get_assistant(assistant)
+
+
+@app.exception_handler(UnknownAssistant)
+async def unknown_assistant_exception_handler(_: Request, exc: UnknownAssistant):
+    return JSONResponse(
+        status_code=404,
+        content={"message": str(exc)},
+    )
 
 
 @app.post("/{chat_id}/message", response_model=list[Message])

@@ -1,5 +1,5 @@
 import json
-import uuid
+from typing import Optional
 
 import httpx
 
@@ -28,11 +28,15 @@ class AksonClient:
         response.raise_for_status()
         return response.json()
 
-    async def send_message(self, chat_id: str, content: str, assistant: str) -> list:
-        response = await self.client.post(
-            f"/{chat_id}/message",
-            json={"content": content, "assistant": assistant, "id": str(uuid.uuid4())},
-        )
+    async def send_message(
+        self, chat_id: str, content: str, *, assistant: Optional[str] = None, message_id: Optional[str] = None
+    ) -> list[dict]:
+        data = {"content": content}
+        if assistant:
+            data["assistant"] = assistant
+        if message_id:
+            data["id"] = message_id
+        response = await self.client.post(f"/{chat_id}/message", json=data)
         response.raise_for_status()
         return response.json()
 

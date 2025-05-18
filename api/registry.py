@@ -4,6 +4,11 @@ from akson import Assistant
 from loader import load_objects
 
 
+class UnknownAssistant(Exception):
+    def __init__(self, name: str):
+        super().__init__(f"Unknown assistant: {name}")
+
+
 class Registry:
 
     def __init__(self):
@@ -20,7 +25,10 @@ class Registry:
         return OrderedDict(sorted(assistants.items()))
 
     def get_assistant(self, name: str) -> Assistant:
-        return self._assistants[name.lower()]
+        try:
+            return self._assistants[name.lower()]
+        except KeyError:
+            raise UnknownAssistant(name)
 
     @property
     def assistants(self) -> list[Assistant]:

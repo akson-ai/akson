@@ -71,8 +71,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     assert update.message.text
     logger.info("handle_message")
     await context.bot.send_chat_action(chat_id=update.effective_chat.id, action=ChatAction.TYPING)
-    # TODO set assistant
-    replies = await client.send_message(akson_chat_id, update.message.text, "ChatGPT")
+    replies = await client.send_message(akson_chat_id, update.message.text)
     for reply in replies:
         text = markdownify(reply["content"])
         await update.message.reply_markdown_v2(text=text)
