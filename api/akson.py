@@ -9,9 +9,6 @@ from abc import ABC, abstractmethod
 from typing import Literal, Optional
 
 from fastapi import Request
-from litellm import ChatCompletionMessageToolCall as LitellmToolCall
-from litellm import Message as LitellmMessage
-from litellm.types.utils import Function
 from pydantic import BaseModel
 from starlette.requests import ClientDisconnect
 
@@ -21,20 +18,6 @@ class ToolCall(BaseModel):
     name: str  # Function name
     arguments: str  # Serialized JSON
 
-    @classmethod
-    def from_litellm(cls, tool_call: LitellmToolCall):
-        return cls(
-            id=tool_call.id,
-            name=tool_call.function.name or "",
-            arguments=tool_call.function.arguments,
-        )
-
-    def to_litellm(self):
-        return LitellmToolCall(
-            id=self.id,
-            function=Function(name=self.name, arguments=self.arguments),
-        )
-
 
 class Message(BaseModel):
     id: str
@@ -43,35 +26,6 @@ class Message(BaseModel):
     content: str
     tool_call: Optional[ToolCall] = None  # Only set if role is "assistant"
     tool_call_id: Optional[str] = None  # Only set if role is "tool"
-
-    @classmethod
-    def from_litellm(cls, message: LitellmMessage, *, name: str):
-        tool_call = None
-        if message.tool_calls:
-            assert len(message.tool_calls) == 1
-            tool_call = ToolCall.from_litellm(message.tool_calls[0])
-        return cls(
-            id=str(uuid.uuid4()),
-            role=message.role,  # type: ignore
-            name=name,
-            content=message.content or "",
-            tool_call=tool_call,
-            tool_call_id=message.get("tool_call_id"),
-        )
-
-    def to_litellm(self):
-        if self.tool_call:
-            tool_calls = [self.tool_call.to_litellm()]
-        else:
-            tool_calls = None
-        return LitellmMessage(
-            id=self.id,
-            role=self.role,  # type: ignore
-            name=self.name,
-            content=self.content,
-            tool_calls=tool_calls,
-            tool_call_id=self.tool_call_id,
-        )
 
 
 class ChatState(BaseModel):
@@ -154,6 +108,7 @@ class Reply:
         await self.chat._queue_message(
             {
                 "type": "add_chunk",
+                "id": self.message.id,
                 # TODO rename as field
                 "location": field,
                 "chunk": chunk,
@@ -161,7 +116,12 @@ class Reply:
         )
 
     async def end(self):
-        await self.chat._queue_message({"type": "end_message"})
+        await self.chat._queue_message(
+            {
+                "type": "end_message",
+                "id": self.message.id,
+            }
+        )
         self.chat.new_messages.append(self.message)
         self.chat.state.messages.append(self.message)
         self.chat.state.save_to_disk()

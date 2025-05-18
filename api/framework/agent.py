@@ -5,11 +5,15 @@ import uuid
 from datetime import datetime
 from typing import Optional
 
-from litellm import CustomStreamWrapper, acompletion
+from litellm import ChatCompletionMessageToolCall as LitellmToolCall
+from litellm import CustomStreamWrapper
+from litellm import Message as LitellmMessage
+from litellm import acompletion
+from litellm.types.utils import Function as LitellmFunction
 from litellm.types.utils import Message as LitellmMessage
 from pydantic import BaseModel
 
-from akson import Assistant, Chat, Message
+from akson import Assistant, Chat, Message, ToolCall
 from logger import logger
 
 from .function_calling import Toolkit
@@ -184,7 +188,7 @@ class Agent(Assistant):
                 ]
             )
 
-        messages.extend([message.to_litellm() for message in chat.state.messages])
+        messages.extend([message_to_litellm(message) for message in chat.state.messages])
         return messages
 
     def _get_system_prompt(self) -> str:
@@ -201,3 +205,48 @@ class Agent(Assistant):
     def add_example(self, user_message: str, response: BaseModel):
         """Add an example to the prompt."""
         self.examples.append((user_message, response))
+
+
+def tool_call_from_litellm(tool_call: LitellmToolCall):
+    return ToolCall(
+        id=tool_call.id,
+        name=tool_call.function.name or "",
+        arguments=tool_call.function.arguments,
+    )
+
+
+def tool_call_to_litellm(self: ToolCall):
+    return LitellmToolCall(
+        id=self.id,
+        function=LitellmFunction(name=self.name, arguments=self.arguments),
+    )
+
+
+def message_from_litellm(message: LitellmMessage, *, name: str):
+    tool_call = None
+    if message.tool_calls:
+        assert len(message.tool_calls) == 1
+        tool_call = tool_call_from_litellm(message.tool_calls[0])
+    return Message(
+        id=str(uuid.uuid4()),
+        role=message.role,  # type: ignore
+        name=name,
+        content=message.content or "",
+        tool_call=tool_call,
+        tool_call_id=message.get("tool_call_id"),
+    )
+
+
+def message_to_litellm(self: Message):
+    if self.tool_call:
+        tool_calls = [tool_call_to_litellm(self.tool_call)]
+    else:
+        tool_calls = None
+    return LitellmMessage(
+        id=self.id,
+        role=self.role,  # type: ignore
+        name=self.name,
+        content=self.content,
+        tool_calls=tool_calls,
+        tool_call_id=self.tool_call_id,
+    )
