@@ -29,6 +29,8 @@ def load_objects(object_type: type[T], dirname: str) -> dict[str, T]:
             if not isinstance(value, object_type):
                 continue
             object_id = f"{module_name}.{key}"
+            if object_id in objects:
+                raise Exception(f"Duplicate object ID: {object_id}")
             objects[object_id] = value
             logger.info("Object loaded: %s", key)
     return objects
