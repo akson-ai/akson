@@ -90,7 +90,6 @@ class Reply:
     FieldType = Literal["content", "tool_call.id", "tool_call.name", "tool_call.arguments", "tool_call_id"]
 
     async def add_chunk(self, chunk: str, *, field: FieldType = "content"):
-        print(f"Adding field: {field}, chunk: {chunk}")
         if field == "content":
             self.message.content += chunk
         elif field == "tool_call_id":
