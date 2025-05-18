@@ -14,7 +14,7 @@ from starlette.requests import ClientDisconnect
 
 from akson import Assistant, Chat, ChatState, Message
 from framework import Agent
-from loader import load_assistants
+from loader import load_objects
 from logger import logger
 
 load_dotenv()
@@ -22,7 +22,12 @@ load_dotenv()
 # Ensure chats directory exists
 os.makedirs("chats", exist_ok=True)
 
-assistants = {assistant.name: assistant for assistant in load_assistants().values()}
+assistants = {}
+for assistant in load_objects(Assistant, "assistants"):
+    if assistant.name in assistants:
+        raise Exception(f"Duplicate assistant found for {assistant.name}")
+    else:
+        assistants[assistant.name] = assistant
 
 default_assistant = os.getenv("DEFAULT_ASSISTANT", "ChatGPT")
 allow_origins = [origin.strip() for origin in os.getenv("ALLOW_ORIGINS", "*").split(",")]

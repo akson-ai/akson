@@ -1,20 +1,13 @@
 import importlib
 import os
-from typing import TypeVar
+from typing import Iterator, TypeVar
 
-from akson import Assistant
 from logger import logger
-
-
-def load_assistants() -> dict[str, Assistant]:
-    return load_objects(Assistant, "assistants")
-
 
 T = TypeVar("T")
 
 
-def load_objects(object_type: type[T], dirname: str) -> dict[str, T]:
-    objects = {}
+def load_objects(object_type: type[T], dirname: str) -> Iterator[T]:
     objects_dir = os.path.join(os.path.dirname(__file__), dirname)
     logger.info("Loading %s objects from directory: %s", object_type.__name__, objects_dir)
     for object_file in os.listdir(objects_dir):
@@ -28,9 +21,5 @@ def load_objects(object_type: type[T], dirname: str) -> dict[str, T]:
         for key, value in vars(module).items():
             if not isinstance(value, object_type):
                 continue
-            object_id = f"{module_name}.{key}"
-            if object_id in objects:
-                raise Exception(f"Duplicate object ID: {object_id}")
-            objects[object_id] = value
-            logger.info("Object loaded: %s", key)
-    return objects
+            logger.info("Loaded object: %s", key)
+            yield value
