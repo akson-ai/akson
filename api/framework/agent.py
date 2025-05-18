@@ -48,7 +48,7 @@ class Agent(Assistant):
         chat.state.messages.append(
             Message(
                 id=str(uuid.uuid4()),
-                role="user",  # type: ignore
+                role="user",
                 content=user_message,
             )
         )
