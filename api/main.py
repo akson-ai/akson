@@ -2,6 +2,7 @@ import asyncio
 import json
 import os
 import traceback
+import uuid
 from datetime import datetime
 
 from dotenv import load_dotenv
@@ -14,20 +15,15 @@ from starlette.requests import ClientDisconnect
 
 from akson import Assistant, Chat, ChatState, Message
 from framework import Agent
-from loader import load_objects
 from logger import logger
+from registry import Registry
 
 load_dotenv()
 
 # Ensure chats directory exists
 os.makedirs("chats", exist_ok=True)
 
-assistants = {}
-for assistant in load_objects(Assistant, "assistants"):
-    if assistant.name in assistants:
-        raise Exception(f"Duplicate assistant found for {assistant.name}")
-    else:
-        assistants[assistant.name] = assistant
+registry = Registry()
 
 default_assistant = os.getenv("DEFAULT_ASSISTANT", "ChatGPT")
 allow_origins = [origin.strip() for origin in os.getenv("ALLOW_ORIGINS", "*").split(",")]
@@ -55,10 +51,12 @@ def _get_chat(chat_id: str) -> Chat:
 
 app = FastAPI()
 
+
 @app.get("/health")
 async def health_check():
     """Health check endpoint to verify the service is running."""
     return {"status": "healthy"}
+
 
 app.add_middleware(
     CORSMiddleware,
@@ -79,7 +77,7 @@ class AssistantModel(BaseModel):
 @app.get("/assistants", response_model=list[AssistantModel])
 async def get_assistants():
     """Return a list of available assistants."""
-    return [AssistantModel(name=assistant.name) for assistant in sorted(assistants.values(), key=lambda a: a.name)]
+    return [AssistantModel(name=assistant.name) for assistant in sorted(registry.assistants, key=lambda a: a.name)]
 
 
 class ChatSummary(BaseModel):
@@ -136,7 +134,7 @@ class MessageRequest(BaseModel):
 
 
 def _get_assistant(message: MessageRequest) -> Assistant:
-    return assistants[message.assistant]
+    return registry.get_assistant(message.assistant)
 
 
 @app.post("/{chat_id}/message", response_model=list[Message])
@@ -150,12 +148,8 @@ async def send_message(
     """Handle a message from the client."""
     chat._request = request
     try:
-        if message.content.strip() == "/clear":
-            chat.state.messages.clear()
-            chat.state.save_to_disk()
-            logger.info("Chat cleared")
-            await chat._queue_message({"type": "clear"})
-            return []
+        if message.content.startswith("/"):
+            return await handle_command(chat, message.content)
 
         user_message = Message(
             id=message.id,
@@ -182,6 +176,25 @@ async def send_message(
     new_messages = chat.new_messages
     chat.new_messages = []
     return new_messages
+
+
+async def handle_command(chat: Chat, content: str):
+    command, *args = content.split()
+    match command:
+        case "/clear":
+            chat.state.messages.clear()
+            logger.info("Chat cleared")
+            await chat._queue_message({"type": "clear"})
+            return [Message(id=str(uuid.uuid4()), role="assistant", content="Chat cleared")]
+        case "/assistant":
+            if len(args) != 1:
+                raise Exception("Usage: /assistant <name>")
+            assistant = registry.get_assistant(args[0])
+            chat.state.assistant = assistant.name
+            await chat._queue_message({"type": "update_assistant", "assistant": chat.state.assistant})
+            return [Message(id=str(uuid.uuid4()), role="assistant", content=f"Assistant set to {assistant.name}")]
+        case _:
+            raise Exception("Unknown command")
 
 
 async def update_title(self: Chat):
