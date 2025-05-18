@@ -55,6 +55,11 @@ def _get_chat(chat_id: str) -> Chat:
 
 app = FastAPI()
 
+@app.get("/health")
+async def health_check():
+    """Health check endpoint to verify the service is running."""
+    return {"status": "healthy"}
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allow_origins,

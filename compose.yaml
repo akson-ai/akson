@@ -13,6 +13,12 @@ services:
             - chats/
         - path: ./api/pyproject.toml
           action: rebuild
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 5s
+      start_interval: 2s
+      timeout: 5s
+      retries: 3
     ports:
       - ${AKSON_API_PORT}:8000
     volumes:
@@ -34,6 +40,9 @@ services:
             - node_modules/
         - path: ./askon-web/package.json
           action: rebuild
+    depends_on:
+      api:
+        condition: service_healthy
     ports:
       - ${AKSON_WEB_PORT}:5173
     environment:
@@ -45,6 +54,9 @@ services:
       dockerfile: ./cli/Dockerfile
     profiles:
       - cli
+    depends_on:
+      api:
+        condition: service_healthy
     environment:
       - AKSON_API_BASE_URL=http://api:8000
 
@@ -61,6 +73,9 @@ services:
             - .venv/
         - path: ./telegram-bot/pyproject.toml
           action: rebuild
+    depends_on:
+      api:
+        condition: service_healthy
     # TODO Save chat ID
     # volumes:
     #   - ./api/chats:/app/chats
