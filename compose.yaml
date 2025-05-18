@@ -15,8 +15,8 @@ services:
           action: rebuild
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 5s
-      start_interval: 2s
+      interval: 10s
+      start_interval: 1s
       timeout: 5s
       retries: 3
     ports:
