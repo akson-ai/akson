@@ -174,17 +174,14 @@ class Chat:
 class Assistant(ABC):
     """Assistants are used to generate responses to chats."""
 
+    def __init__(self):
+        self.name: str = self.__class__.__name__
+        """Name of the assistant. Visible in the UI."""
+        self.description: Optional[str] = None
+        """Description of the assistant, its purpose and capabilities."""
+
     def __repr__(self):
         return f"Assistant<{self.name}>"
-
-    @property
-    def name(self) -> str:
-        """
-        Name of the assistant. Visible in the UI.
-        """
-        return self.__class__.__name__
-
-    # TODO add description method to Assistant
 
     @abstractmethod
     async def run(self, chat: Chat) -> None:

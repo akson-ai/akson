@@ -35,17 +35,13 @@ class Agent(Assistant):
         """
         Creates a new Agent.
         """
+        self.name = name
         self.model = model
         self.system_prompt = system_prompt
         self.output_type = output_type
         self.toolkit = toolkit
         self.max_turns = max_turns
         self.examples: list[tuple[str, BaseModel]] = []
-        self._name = name
-
-    @property
-    def name(self) -> str:
-        return self._name
 
     async def respond(self, user_message: str) -> str | BaseModel:
         chat = Chat.temp()
