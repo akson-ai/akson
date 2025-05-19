@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { API_BASE_URL } from "../constants";
 
-export function useEvents(chatId, setMessages) {
+export function useEvents(chatId, setMessages, setSelectedAssistant) {
   useEffect(() => {
     const eventSource = new EventSource(`${API_BASE_URL}/${chatId}/events`, {
       withCredentials: true,
@@ -24,6 +24,8 @@ export function useEvents(chatId, setMessages) {
         ]);
       } else if (data.type === "clear") {
         setMessages([]);
+      } else if (data.type === "update_assistant") {
+        setSelectedAssistant(data.assistant);
       } else if (data.type === "add_chunk") {
         setMessages((prev) => {
           const i = prev.length - 1;

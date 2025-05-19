@@ -58,7 +58,7 @@ function ChatApp({ chatId }) {
     window.location.href = "/chat";
   };
 
-  useEvents(chatId, setMessages);
+  useEvents(chatId, setMessages, setSelectedAssistant);
 
   const sendMessage = () => {
     if (!inputText.trim()) return;
