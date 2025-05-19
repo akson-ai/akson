@@ -174,14 +174,15 @@ async def send_message(
         if message.content.startswith("/"):
             return await handle_command(chat, message.content)
 
-        user_message = Message(
-            id=message.id,
-            role="user",
-            content=message.content,
+        chat.state.messages.append(
+            Message(
+                id=message.id,
+                role="user",
+                content=message.content,
+            )
         )
-        chat.state.messages.append(user_message)
-
         await assistant.run(chat)
+
         background_tasks.add_task(update_title, chat)
     except ClientDisconnect:
         logger.info("Client disconnected")
