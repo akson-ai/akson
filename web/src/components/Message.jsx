@@ -45,10 +45,20 @@ function Message({ id, role, name, content, toolCall, category, onDelete }) {
                 components={{
                   code({ className, children, ...props }) {
                     const match = /language-(\w+)/.exec(className || "");
+                    const code = String(children).replace(/\n$/, "");
                     return match ? (
-                      <SyntaxHighlighter style={vscDarkPlus} language={match[1]} {...props}>
-                        {String(children).replace(/\n$/, "")}
-                      </SyntaxHighlighter>
+                      <div className="relative group">
+                        <button
+                          className="absolute top-2 right-2 btn btn-xs btn-ghost btn-square opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={() => navigator.clipboard.writeText(code)}
+                          title="Copy code"
+                        >
+                          <FaCopy />
+                        </button>
+                        <SyntaxHighlighter style={vscDarkPlus} language={match[1]} {...props}>
+                          {code}
+                        </SyntaxHighlighter>
+                      </div>
                     ) : (
                       <code className={className} {...props}>
                         {children}
