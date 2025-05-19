@@ -110,15 +110,12 @@ async def set_assistant(assistant: str = Body(...), chat: Chat = Depends(deps.ge
 
 @app.post("/{chat_id}/message", response_model=list[Message])
 async def send_message(
-    request: Request,
     message: models.SendMessageRequest,
     background_tasks: BackgroundTasks,
     assistant: Assistant = Depends(deps.get_assistant),
     chat: Chat = Depends(deps.get_chat),
 ):
     """Handle a message from the client."""
-    chat._request = request
-    chat._assistant = assistant
     try:
         if message.content.startswith("/"):
             return await handle_command(chat, message.content)
@@ -138,12 +135,11 @@ async def send_message(
     except Exception as e:
         logger.error(f"Error handling message: {e}")
         traceback.print_exc()
-        reply = await chat.reply("assistant")
+        reply = await chat.reply("assistant", name="Error")
         await reply.add_chunk(f"```{e.__class__.__name__}: {e}```")
         # TODO add category "error"
         await reply.end()
     finally:
-        chat._request = None
         chat.state.save_to_disk()
 
     new_messages = chat.new_messages

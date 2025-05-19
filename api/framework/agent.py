@@ -18,6 +18,8 @@ from logger import logger
 from .function_calling import Toolkit
 from .streaming import MessageBuilder
 
+DEFAULT_MODEL = os.environ["DEFAULT_MODEL"]
+
 
 class Agent(Assistant):
     """Provides an Assistant implementation with a given system prompt and toolkit."""
@@ -26,7 +28,7 @@ class Agent(Assistant):
         self,
         name: str,
         description: Optional[str] = None,
-        model: str = os.environ["DEFAULT_MODEL"],
+        model: str = DEFAULT_MODEL,
         system_prompt: Optional[str] = None,
         output_type: Optional[type[BaseModel]] = None,
         toolkit: Optional[Toolkit] = None,
@@ -45,7 +47,7 @@ class Agent(Assistant):
         self.examples: list[tuple[str, BaseModel]] = []
 
     async def respond(self, user_message: str) -> str | BaseModel:
-        chat = Chat.temp()
+        chat = Chat()
         chat.state.messages.append(
             Message(
                 role="user",
@@ -72,7 +74,7 @@ class Agent(Assistant):
             for tool_message in tool_messages:
                 assert tool_message.content
                 messages.append(tool_message)
-                reply = await chat.reply("tool")
+                reply = await chat.reply("tool", name=self.name)
                 await reply.add_chunk(tool_message.content)
                 await reply.add_chunk(tool_message["tool_call_id"], field="tool_call_id")
                 await reply.end()
@@ -125,7 +127,7 @@ class Agent(Assistant):
 
         # We start by sending a begin_message event to the web client.
         # This will cause the web client to draw a new message box for the assistant.
-        reply = await chat.reply("assistant")
+        reply = await chat.reply("assistant", name=self.name)
 
         # We will aggregate delta messages and store them in this variable until we see a finish_reason.
         # This is the only way to get the full content of the message.

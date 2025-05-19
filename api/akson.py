@@ -7,7 +7,6 @@ import uuid
 from abc import ABC, abstractmethod
 from typing import Callable, Coroutine, Literal, Optional
 
-from fastapi import Request
 from pydantic import BaseModel, Field
 
 
@@ -29,18 +28,14 @@ class Message(BaseModel):
 class ChatState(BaseModel):
     """Chat that can be saved and loaded from a file."""
 
-    id: str
-    messages: list[Message]
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()).replace("-", ""))
+    messages: list[Message] = []
     assistant: Optional[str] = None
     title: Optional[str] = None
 
     @classmethod
     def create_new(cls, id: str, assistant: str):
-        return cls(
-            id=id,
-            assistant=assistant,
-            messages=[],
-        )
+        return cls(id=id, assistant=assistant)
 
     @classmethod
     def load_from_disk(cls, chat_id: str):
@@ -60,11 +55,11 @@ class ChatState(BaseModel):
 
 class Reply:
 
-    def __init__(self, *, chat: "Chat", role: Literal["assistant", "tool"]):
+    def __init__(self, *, chat: "Chat", role: Literal["assistant", "tool"], name: str):
         self.chat = chat
         self.message = Message(
             role=role,
-            name=chat._assistant.name,
+            name=name,
             content="",
         )
 
@@ -130,7 +125,16 @@ class Chat:
     This serves as the main interface between the assistant and the web application.
     """
 
-    def __init__(self, *, state: ChatState, publisher: Optional[Callable[[dict], Coroutine]] = None):
+    def __init__(
+        self,
+        *,
+        # assistant: "Assistant",
+        state: Optional[ChatState] = None,
+        publisher: Optional[Callable[[dict], Coroutine]] = None,
+    ):
+        if not state:
+            state = ChatState()
+
         # Holds the chat's persistent state loaded from disk.
         # Mainly includes the history of chat messages, which is a list of Message.
         self.state = state
@@ -139,32 +143,22 @@ class Chat:
         # Contains new messages generated during the agent run.
         self.new_messages: list[Message] = []
 
-        # The assistant that will be used to generate responses.
-        self._assistant: Assistant
-
-        self._publisher = publisher
-
-        # HTTP request
-        self._request: Optional[Request] = None
+        # Publishes messages to clients.
+        self.publisher = publisher
 
         # These will be set by the Assistant.run() method.
         self._structured_output: Optional[BaseModel] = None
 
-    @classmethod
-    def temp(cls):
-        state = ChatState(id="", messages=[], assistant="", title="")
-        return cls(state=state)
-
-    async def reply(self, role: Literal["assistant", "tool"]) -> Reply:
+    async def reply(self, role: Literal["assistant", "tool"], name: str) -> Reply:
         # category: Optional[Literal["info", "success", "warning", "error"]] = None,
-        return await Reply.create(chat=self, role=role)
+        return await Reply.create(chat=self, role=role, name=name)
 
     async def set_structured_output(self, output: BaseModel):
         self._structured_output = output
 
     async def _queue_message(self, message: dict):
-        if self._publisher:
-            await self._publisher(message)
+        if self.publisher:
+            await self.publisher(message)
 
 
 class Assistant(ABC):
