@@ -33,6 +33,7 @@ default_assistant = os.getenv("DEFAULT_ASSISTANT", "ChatGPT")
 allow_origins = [origin.strip() for origin in os.getenv("ALLOW_ORIGINS", "*").split(",")]
 
 # Need to keep a single instance of each chat in memory in order to do pub/sub on queue
+# TODO hold only queues
 chats: dict[str, Chat] = {}
 
 
