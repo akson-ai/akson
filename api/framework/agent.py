@@ -25,6 +25,7 @@ class Agent(Assistant):
     def __init__(
         self,
         name: str,
+        description: Optional[str] = None,
         model: str = os.environ["DEFAULT_MODEL"],
         system_prompt: Optional[str] = None,
         output_type: Optional[type[BaseModel]] = None,
@@ -35,6 +36,7 @@ class Agent(Assistant):
         Creates a new Agent.
         """
         self.name = name
+        self.description = description
         self.model = model
         self.system_prompt = system_prompt
         self.output_type = output_type

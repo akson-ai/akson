@@ -176,7 +176,7 @@ class Assistant(ABC):
     def __init__(self):
         self.name: str = self.__class__.__name__
         """Name of the assistant. Visible in the UI."""
-        self.description: Optional[str] = None
+        self.description: Optional[str] = self.__class__.__doc__
         """Description of the assistant, its purpose and capabilities."""
 
     def __repr__(self):
