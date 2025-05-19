@@ -96,10 +96,10 @@ async def get_chat_state_endpoint(state: ChatState = Depends(deps.get_chat_state
 
 
 @app.put("/{chat_id}/assistant")
-async def set_assistant(assistant: str = Body(...), chat: Chat = Depends(deps.get_chat)):
+async def set_assistant(assistant: str = Body(...), state: ChatState = Depends(deps.get_chat_state)):
     """Update the assistant for a chat session."""
-    chat.state.assistant = assistant
-    chat.state.save_to_disk()
+    state.assistant = assistant
+    state.save_to_disk()
 
 
 @app.post("/{chat_id}/message", response_model=list[Message])
@@ -163,17 +163,16 @@ async def handle_command(chat: Chat, content: str):
 @app.delete("/{chat_id}/message/{message_id}")
 async def delete_message(
     message_id: str,
-    chat: Chat = Depends(deps.get_chat),
+    state: ChatState = Depends(deps.get_chat_state),
 ):
     """Delete a message by its ID."""
-    chat.state.messages = [msg for msg in chat.state.messages if msg.id != message_id]
-    chat.state.save_to_disk()
+    state.messages = [msg for msg in state.messages if msg.id != message_id]
+    state.save_to_disk()
 
 
 @app.delete("/{chat_id}")
 async def delete_chat(chat_id: str):
     """Delete a chat by its ID."""
-    # Remove the file from disk
     file_path = ChatState.file_path(chat_id)
     if os.path.exists(file_path):
         os.remove(file_path)
