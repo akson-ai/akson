@@ -2,15 +2,13 @@
 akson package contains the interface that needs to be implemented by assistants.
 """
 
-import asyncio
 import os
 import uuid
 from abc import ABC, abstractmethod
-from typing import Literal, Optional
+from typing import Callable, Coroutine, Literal, Optional
 
 from fastapi import Request
 from pydantic import BaseModel, Field
-from starlette.requests import ClientDisconnect
 
 
 class ToolCall(BaseModel):
@@ -132,7 +130,7 @@ class Chat:
     This serves as the main interface between the assistant and the web application.
     """
 
-    def __init__(self, *, state: ChatState):
+    def __init__(self, *, state: ChatState, publisher: Optional[Callable[[dict], Coroutine]] = None):
         # Holds the chat's persistent state loaded from disk.
         # Mainly includes the history of chat messages, which is a list of Message.
         self.state = state
@@ -144,8 +142,7 @@ class Chat:
         # The assistant that will be used to generate responses.
         self._assistant: Assistant
 
-        # Message that are put here will be sent over SSE by the web server.
-        self._queue: Optional[asyncio.Queue] = None
+        self._publisher = publisher
 
         # HTTP request
         self._request: Optional[Request] = None
@@ -166,10 +163,8 @@ class Chat:
         self._structured_output = output
 
     async def _queue_message(self, message: dict):
-        if self._request and await self._request.is_disconnected():
-            raise ClientDisconnect
-        if self._queue:
-            await self._queue.put(message)
+        if self._publisher:
+            await self._publisher(message)
 
 
 class Assistant(ABC):

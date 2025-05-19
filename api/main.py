@@ -1,4 +1,3 @@
-import asyncio
 import json
 import os
 import traceback
@@ -20,21 +19,22 @@ from starlette.requests import ClientDisconnect
 from akson import Assistant, Chat, ChatState, Message
 from framework import Agent
 from logger import logger
+from pubsub import PubSub
 from registry import Registry, UnknownAssistant
 
 load_dotenv()
 
-# Ensure chats directory exists
-os.makedirs("chats", exist_ok=True)
-
-registry = Registry()
-
 default_assistant = os.getenv("DEFAULT_ASSISTANT", "ChatGPT")
 allow_origins = [origin.strip() for origin in os.getenv("ALLOW_ORIGINS", "*").split(",")]
 
-# Need to keep a single instance of each chat in memory in order to do pub/sub on queue
-# TODO hold only queues
-chats: dict[str, Chat] = {}
+# Ensure chats directory exists
+os.makedirs("chats", exist_ok=True)
+
+# Manages assistants
+registry = Registry()
+
+# For sending chat events to clients
+pubsub = PubSub()
 
 
 def _get_chat_state(chat_id: str) -> ChatState:
@@ -45,13 +45,7 @@ def _get_chat_state(chat_id: str) -> ChatState:
 
 
 def _get_chat(chat_id: str) -> Chat:
-    try:
-        return chats[chat_id]
-    except KeyError:
-        state = _get_chat_state(chat_id)
-        chat = Chat(state=state)
-        chats[chat_id] = chat
-        return chat
+    return Chat(state=_get_chat_state(chat_id), publisher=pubsub.get_publisher(chat_id))
 
 
 app = FastAPI()
@@ -260,10 +254,6 @@ async def delete_message(
 @app.delete("/{chat_id}")
 async def delete_chat(chat_id: str):
     """Delete a chat by its ID."""
-    # Remove from memory if it exists
-    if chat_id in chats:
-        del chats[chat_id]
-
     # Remove the file from disk
     file_path = ChatState.file_path(chat_id)
     if os.path.exists(file_path):
@@ -275,12 +265,9 @@ async def get_events(chat: Chat = Depends(_get_chat)):
     """Stream events to the client over SSE."""
 
     async def generate_events():
-        chat._queue = asyncio.Queue()
-        try:
+        async with pubsub.subscribe(chat.state.id) as queue:
             while True:
-                message = await chat._queue.get()
+                message = await queue.get()
                 yield ServerSentEvent(json.dumps(message))
-        finally:
-            chat._queue = None
 
     return EventSourceResponse(generate_events())
