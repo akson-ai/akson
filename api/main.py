@@ -1,66 +1,33 @@
 import json
 import os
 import traceback
-import uuid
 from datetime import datetime
-from typing import Optional
+
+from dotenv import load_dotenv
+
+load_dotenv()
 
 import rich
-from dotenv import load_dotenv
 from fastapi import BackgroundTasks, Body, Depends, FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel
 from sse_starlette.event import ServerSentEvent
 from sse_starlette.sse import EventSourceResponse
 from starlette.requests import ClientDisconnect
 
+import deps
+import models
+import tasks
 from akson import Assistant, Chat, ChatState, Message
-from framework import Agent
 from logger import logger
 from pubsub import PubSub
-from registry import Registry, UnknownAssistant
+from registry import UnknownAssistant
 
-load_dotenv()
-
-default_assistant = os.getenv("DEFAULT_ASSISTANT", "ChatGPT")
 allow_origins = [origin.strip() for origin in os.getenv("ALLOW_ORIGINS", "*").split(",")]
-
-# Ensure chats directory exists
-os.makedirs("chats", exist_ok=True)
-
-# Manages assistants
-registry = Registry()
-
-# For sending chat events to clients
-pubsub = PubSub()
-
-
-def _get_chat_state(chat_id: str) -> ChatState:
-    try:
-        return ChatState.load_from_disk(chat_id)
-    except FileNotFoundError:
-        return ChatState.create_new(chat_id, default_assistant)
-
-
-def _get_chat(chat_id: str) -> Chat:
-    return Chat(state=_get_chat_state(chat_id), publisher=pubsub.get_publisher(chat_id))
 
 
 app = FastAPI()
-
-
-@app.exception_handler(RequestValidationError)
-async def validation_exception_handler(_: Request, exc: RequestValidationError):
-    rich.print(exc.errors())
-    return JSONResponse(str(exc), status_code=422)
-
-
-@app.get("/health")
-async def health_check():
-    """Health check endpoint to verify the service is running."""
-    return {"status": "healthy"}
 
 
 app.add_middleware(
@@ -72,26 +39,35 @@ app.add_middleware(
 )
 
 
-class AssistantModel(BaseModel):
-    name: str
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(_: Request, exc: RequestValidationError):
+    rich.print(exc.errors())
+    return JSONResponse(str(exc), status_code=422)
 
-    class Config:
-        title = "Assistant"
+
+@app.exception_handler(UnknownAssistant)
+async def unknown_assistant_exception_handler(_: Request, exc: UnknownAssistant):
+    return JSONResponse(
+        status_code=404,
+        content={"message": str(exc)},
+    )
 
 
-@app.get("/assistants", response_model=list[AssistantModel])
+@app.get("/health")
+async def health_check():
+    """Health check endpoint to verify the service is running."""
+    return {"status": "healthy"}
+
+
+@app.get("/assistants", response_model=list[models.Assistant])
 async def get_assistants():
     """Return a list of available assistants."""
-    return [AssistantModel(name=assistant.name) for assistant in sorted(registry.assistants, key=lambda a: a.name)]
+    return [
+        models.Assistant(name=assistant.name) for assistant in sorted(deps.registry.assistants, key=lambda a: a.name)
+    ]
 
 
-class ChatSummary(BaseModel):
-    id: str
-    title: str
-    last_updated: datetime
-
-
-@app.get("/chats", response_model=list[ChatSummary])
+@app.get("/chats", response_model=list[models.ChatSummary])
 async def get_chats():
     """Return a list of all chat sessions."""
     chat_files = []
@@ -105,7 +81,7 @@ async def get_chats():
                 last_updated = os.path.getmtime(ChatState.file_path(chat_id))
 
                 chat_files.append(
-                    ChatSummary(
+                    models.ChatSummary(
                         id=chat_id,
                         title=state.title or "Untitled Chat",
                         last_updated=datetime.fromtimestamp(last_updated),
@@ -120,48 +96,25 @@ async def get_chats():
 
 
 @app.get("/{chat_id}/state", response_model=ChatState)
-async def get_chat_state(state: ChatState = Depends(_get_chat_state)):
+async def get_chat_state_endpoint(state: ChatState = Depends(deps.get_chat_state)):
     """Return the state of a chat session."""
     return state
 
 
 @app.put("/{chat_id}/assistant")
-async def set_assistant(assistant: str = Body(...), chat: Chat = Depends(_get_chat)):
+async def set_assistant(assistant: str = Body(...), chat: Chat = Depends(deps.get_chat)):
     """Update the assistant for a chat session."""
     chat.state.assistant = assistant
     chat.state.save_to_disk()
 
 
-class MessageRequest(BaseModel):
-    content: str = Body(...)
-    id: str = Body(default_factory=lambda: str(uuid.uuid4()).replace("-", ""))
-    assistant: Optional[str] = Body(default=None)
-
-
-def _get_assistant(message: MessageRequest, chat: Chat = Depends(_get_chat)) -> Assistant:
-    assistant = chat.state.assistant
-    if message.assistant:
-        assistant = message.assistant
-    if not assistant:
-        assistant = default_assistant
-    return registry.get_assistant(assistant)
-
-
-@app.exception_handler(UnknownAssistant)
-async def unknown_assistant_exception_handler(_: Request, exc: UnknownAssistant):
-    return JSONResponse(
-        status_code=404,
-        content={"message": str(exc)},
-    )
-
-
 @app.post("/{chat_id}/message", response_model=list[Message])
 async def send_message(
     request: Request,
-    message: MessageRequest,
+    message: models.SendMessageRequest,
     background_tasks: BackgroundTasks,
-    assistant: Assistant = Depends(_get_assistant),
-    chat: Chat = Depends(_get_chat),
+    assistant: Assistant = Depends(deps.get_assistant),
+    chat: Chat = Depends(deps.get_chat),
 ):
     """Handle a message from the client."""
     chat._request = request
@@ -179,7 +132,7 @@ async def send_message(
         )
         await assistant.run(chat)
 
-        background_tasks.add_task(update_title, chat)
+        background_tasks.add_task(tasks.update_title, chat)
     except ClientDisconnect:
         logger.info("Client disconnected")
     except Exception as e:
@@ -209,7 +162,7 @@ async def handle_command(chat: Chat, content: str):
         case "/assistant":
             if len(args) != 1:
                 raise Exception("Usage: /assistant <name>")
-            assistant = registry.get_assistant(args[0])
+            assistant = deps.registry.get_assistant(args[0])
             chat.state.assistant = assistant.name
             await chat._queue_message({"type": "update_assistant", "assistant": chat.state.assistant})
             return [Message(role="assistant", content=f"Assistant set to {assistant.name}")]
@@ -217,34 +170,10 @@ async def handle_command(chat: Chat, content: str):
             raise Exception("Unknown command")
 
 
-async def update_title(self: Chat):
-    if self.state.title:
-        return
-
-    class TitleResponse(BaseModel):
-        title: str
-
-    instructions = """
-        You are a helpful summarizer.
-        Your input is the first 2 messages of a conversation.
-        Output a title for the conversation.
-    """
-    input = (
-        f"<user>{self.state.messages[0].content}</user>\n\n" f"<assistant>{self.state.messages[1].content}</assistant>"
-    )
-    titler = Agent(name="Titler", model="gpt-4.1-nano", system_prompt=instructions, output_type=TitleResponse)
-    response = await titler.respond(input)
-    assert isinstance(response, TitleResponse)
-    self.state.title = response.title
-    await self._queue_message({"type": "update_title", "title": self.state.title})
-    # TODO Fix race condition
-    self.state.save_to_disk()
-
-
 @app.delete("/{chat_id}/message/{message_id}")
 async def delete_message(
     message_id: str,
-    chat: Chat = Depends(_get_chat),
+    chat: Chat = Depends(deps.get_chat),
 ):
     """Delete a message by its ID."""
     chat.state.messages = [msg for msg in chat.state.messages if msg.id != message_id]
@@ -261,11 +190,11 @@ async def delete_chat(chat_id: str):
 
 
 @app.get("/{chat_id}/events")
-async def get_events(chat: Chat = Depends(_get_chat)):
+async def get_events(chat_id: str, pubsub: PubSub = Depends(deps.get_pubsub)):
     """Stream events to the client over SSE."""
 
     async def generate_events():
-        async with pubsub.subscribe(chat.state.id) as queue:
+        async with pubsub.subscribe(chat_id) as queue:
             while True:
                 message = await queue.get()
                 yield ServerSentEvent(json.dumps(message))
