@@ -12,9 +12,9 @@ class UnknownAssistant(Exception):
 class Registry:
 
     def __init__(self):
-        self._assistants = self.load_assistants()
+        self._assistants = self._load_assistants()
 
-    def load_assistants(self):
+    def _load_assistants(self):
         assistants = {}
         for assistant in load_objects(Assistant, "assistants"):
             key = assistant.name.lower()
