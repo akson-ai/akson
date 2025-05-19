@@ -1,13 +1,11 @@
 import importlib
 import os
-from typing import Iterator, TypeVar
+from typing import Iterator
 
 from logger import logger
 
-T = TypeVar("T")
 
-
-def load_objects(object_type: type[T], dirname: str) -> Iterator[T]:
+def load_objects[T](object_type: type[T], dirname: str) -> Iterator[T]:
     objects_dir = os.path.join(os.path.dirname(__file__), dirname)
     logger.info("Loading %s objects from directory: %s", object_type.__name__, objects_dir)
     for object_file in os.listdir(objects_dir):
