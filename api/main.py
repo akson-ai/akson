@@ -24,15 +24,11 @@ from logger import logger
 from pubsub import PubSub
 from registry import UnknownAssistant
 
-allow_origins = [origin.strip() for origin in os.getenv("ALLOW_ORIGINS", "*").split(",")]
-
-
 app = FastAPI()
-
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=allow_origins,
+    allow_origins=[origin.strip() for origin in os.getenv("ALLOW_ORIGINS", "*").split(",")],
     allow_methods=["*"],
     allow_headers=["*"],
     allow_credentials=True,
