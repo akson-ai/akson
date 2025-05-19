@@ -12,7 +12,8 @@ class UnknownAssistant(Exception):
 class Registry:
 
     def __init__(self):
-        self._assistants = self._load_assistants()
+        # Keys are lowercase assistant names
+        self._assistants: dict[str, Assistant] = self._load_assistants()
 
     def _load_assistants(self):
         assistants = {}
@@ -25,9 +26,13 @@ class Registry:
         return OrderedDict(sorted(assistants.items()))
 
     def get_assistant(self, name: str) -> Assistant:
+        name = name.lower()
         try:
-            return self._assistants[name.lower()]
+            return self._assistants[name]
         except KeyError:
+            matches = [assistant for name, assistant in self._assistants.items() if name.startswith(name)]
+            if len(matches) == 1:
+                return matches[0]
             raise UnknownAssistant(name)
 
     @property
