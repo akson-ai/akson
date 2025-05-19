@@ -39,6 +39,8 @@ def get_assistant(message: models.SendMessageRequest, chat: Chat = Depends(get_c
     assistant = chat.state.assistant
     if message.assistant:
         assistant = message.assistant
+    if message.content.startswith("@"):
+        assistant = message.content[1:].split()[0]
     if not assistant:
         assistant = default_assistant
     return registry.get_assistant(assistant)
