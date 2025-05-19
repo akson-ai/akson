@@ -21,9 +21,7 @@ class Event(BaseModel):
 class MessageBuilder:
     """A class for building a Message object from a stream of deltas. Usage is similar to io.StringIO."""
 
-    def __init__(self, id: str, name: str):
-        self.id = id
-        self.name = name
+    def __init__(self):
         self.values = Values(
             message_role=StrValue(),
             message_content=StrValue("content", streamable=True),
@@ -51,8 +49,6 @@ class MessageBuilder:
     def getvalue(self) -> Message:
         """Construct a Message object from the current state of the builder."""
         message = Message(
-            id=self.id,
-            name=self.name,
             role=self.values["message_role"],  # type: ignore
             content=self.values["message_content"],
         )

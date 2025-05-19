@@ -130,7 +130,7 @@ class Agent(Assistant):
         # We will aggregate delta messages and store them in this variable until we see a finish_reason.
         # This is the only way to get the full content of the message.
         # We'll return this value at the end of the function.
-        builder = MessageBuilder(reply.message.id, self.name)
+        builder = MessageBuilder()
 
         async for chunk in response:
             assert chunk.__class__.__name__ == "ModelResponseStream"
