@@ -171,6 +171,7 @@ async def send_message(
 ):
     """Handle a message from the client."""
     chat._request = request
+    chat._assistant = assistant
     try:
         if message.content.startswith("/"):
             return await handle_command(chat, message.content)

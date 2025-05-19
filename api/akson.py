@@ -62,11 +62,11 @@ class ChatState(BaseModel):
 
 class Reply:
 
-    def __init__(self, *, chat: "Chat", role: Literal["assistant", "tool"], name: str):
+    def __init__(self, *, chat: "Chat", role: Literal["assistant", "tool"]):
         self.chat = chat
         self.message = Message(
             role=role,
-            name=name,
+            name=chat._assistant.name,
             content="",
         )
 
@@ -138,6 +138,12 @@ class Chat:
         self.state = state
         """Holds the chat's persistent state loaded from disk."""
 
+        # Contains new messages generated during the agent run.
+        self.new_messages: list[Message] = []
+
+        # The assistant that will be used to generate responses.
+        self._assistant: Assistant
+
         # Message that are put here will be sent over SSE by the web server.
         self._queue: Optional[asyncio.Queue] = None
 
@@ -147,9 +153,6 @@ class Chat:
         # These will be set by the Assistant.run() method.
         self._structured_output: Optional[BaseModel] = None
 
-        # Contains new messages generated during the agent run.
-        self.new_messages: list[Message] = []
-
     @classmethod
     def temp(cls):
         state = ChatState(id="", messages=[], assistant="", title="")
@@ -157,8 +160,7 @@ class Chat:
 
     async def reply(self, role: Literal["assistant", "tool"]) -> Reply:
         # category: Optional[Literal["info", "success", "warning", "error"]] = None,
-        # TODO name could be coming from the request context
-        return await Reply.create(chat=self, role=role, name=self.state.assistant)
+        return await Reply.create(chat=self, role=role)
 
     async def set_structured_output(self, output: BaseModel):
         self._structured_output = output
