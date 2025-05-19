@@ -58,9 +58,7 @@ async def health_check():
 @app.get("/assistants", response_model=list[models.Assistant])
 async def get_assistants():
     """Return a list of available assistants."""
-    return [
-        models.Assistant(name=assistant.name) for assistant in sorted(deps.registry.assistants, key=lambda a: a.name)
-    ]
+    return [models.Assistant(name=assistant.name) for assistant in deps.registry.assistants]
 
 
 @app.get("/chats", response_model=list[models.ChatSummary])
