@@ -30,7 +30,7 @@ class Registry:
         try:
             return self._assistants[name]
         except KeyError:
-            matches = [assistant for name, assistant in self._assistants.items() if name.startswith(name)]
+            matches = [assistant for assistant in self.assistants if assistant.name.lower().startswith(name)]
             if len(matches) == 1:
                 return matches[0]
             raise UnknownAssistant(name)
