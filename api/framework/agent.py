@@ -137,6 +137,10 @@ class Agent(Assistant):
         # We'll return this value at the end of the function.
         builder = MessageBuilder()
 
+        # We will return this value at the end of the function.
+        message: Optional[LitellmMessage] = None
+
+        # Do not break this loop. Otherwise, litellm will not be able to run callbacks.
         async for chunk in response:
             assert chunk.__class__.__name__ == "ModelResponseStream"
             assert len(chunk.choices) == 1
@@ -159,9 +163,11 @@ class Agent(Assistant):
                     raise NotImplementedError(f"finish_reason={finish_reason}")
 
                 await reply.end()
-                return message
 
-        raise Exception("Stream ended unexpectedly")
+        if not message:
+            raise Exception("Stream ended unexpectedly")
+
+        return message
 
     def _get_messages(self, chat: Chat) -> list[LitellmMessage]:
         messages: list[LitellmMessage] = []
