@@ -4,6 +4,7 @@ import time
 from datetime import datetime
 from typing import Optional
 
+import litellm
 from litellm import ChatCompletionMessageToolCall as LitellmToolCall
 from litellm import CustomStreamWrapper
 from litellm import Message as LitellmMessage
@@ -19,6 +20,8 @@ from .function_calling import Toolkit
 from .streaming import MessageBuilder
 
 DEFAULT_MODEL = os.environ["DEFAULT_MODEL"]
+
+litellm.drop_params = True
 
 
 class Agent(Assistant):
