@@ -23,6 +23,7 @@ from akson import Assistant, Chat, ChatState, Message
 from logger import logger
 from pubsub import PubSub
 from registry import UnknownAssistant
+from runner import Runner
 
 app = FastAPI()
 
@@ -113,17 +114,14 @@ async def send_message(
     try:
         if message.content.startswith("/"):
             return await handle_command(chat, message.content)
-
-        chat.state.messages.append(
-            Message(
-                id=message.id,
-                role="user",
-                content=message.content,
-            )
+        user_message = Message(
+            id=message.id,
+            role="user",
+            content=message.content,
         )
-        await assistant.run(chat)
-
+        assistant_messages = await Runner(assistant, chat).run(user_message)
         background_tasks.add_task(tasks.update_title, chat)
+        return assistant_messages
     except ClientDisconnect:
         logger.info("Client disconnected")
     except Exception as e:
@@ -135,10 +133,6 @@ async def send_message(
         await reply.end()
     finally:
         chat.state.save_to_disk()
-
-    new_messages = chat.new_messages
-    chat.new_messages = []
-    return new_messages
 
 
 async def handle_command(chat: Chat, content: str):
