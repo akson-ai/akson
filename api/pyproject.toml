@@ -24,6 +24,7 @@ dependencies = [
     "openai>=1.70.0",
     "litellm>=1.69.0",
     "uvicorn>=0.34.0",
+    "langfuse>=2.60.5",
 ]
 
 [dependency-groups]

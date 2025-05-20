@@ -5,6 +5,7 @@ from datetime import datetime
 from typing import Optional
 
 import litellm
+from langfuse.decorators import langfuse_context, observe
 from litellm import ChatCompletionMessageToolCall as LitellmToolCall
 from litellm import CustomStreamWrapper
 from litellm import Message as LitellmMessage
@@ -22,6 +23,9 @@ from .streaming import MessageBuilder
 DEFAULT_MODEL = os.environ["DEFAULT_MODEL"]
 
 litellm.drop_params = True
+if os.getenv("LANGFUSE_PUBLIC_KEY") and os.getenv("LANGFUSE_SECRET_KEY"):
+    litellm.success_callback = ["langfuse"]
+    litellm.failure_callback = ["langfuse"]
 
 
 class Agent(Assistant):
@@ -64,6 +68,7 @@ class Agent(Assistant):
         else:
             return chat.state.messages[-1].content
 
+    @observe(name="Agent.run")
     async def run(self, chat: Chat) -> None:
         logger.info("Running assistant %s", self.name)
 
@@ -99,6 +104,7 @@ class Agent(Assistant):
             message = await self._complete(messages, chat)
             messages.append(message)
 
+    @observe(as_type="generation")
     async def _complete(self, messages: list[LitellmMessage], chat: Chat) -> LitellmMessage:
         # Replace invalid characters in assistant name
         for message in messages:
@@ -124,6 +130,10 @@ class Agent(Assistant):
             model=self.model,
             messages=messages,
             stream=True,
+            metadata={
+                "existing_trace_id": langfuse_context.get_current_trace_id(),
+                "parent_observation_id": langfuse_context.get_current_observation_id(),
+            },
             **kwargs,
         )
         assert isinstance(response, CustomStreamWrapper)
