@@ -37,7 +37,6 @@ def substract_two_numbers(a: int, b: int) -> int:
 
 mathematician = Agent(
     name="Mathematician",
-    model="claude-3-7-sonnet-latest",
     system_prompt=system_prompt,
     toolkit=FunctionToolkit([add_two_numbers, substract_two_numbers]),
 )
