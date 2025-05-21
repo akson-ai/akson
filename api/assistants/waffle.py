@@ -51,7 +51,7 @@ async def search_web(query: str) -> str:
             },
         ],
     }
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=60) as client:
         response = await client.post(url, json=payload, headers=headers)
         try:
             response.raise_for_status()
