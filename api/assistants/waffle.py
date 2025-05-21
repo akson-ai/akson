@@ -1,7 +1,7 @@
 import os
 import pathlib
 
-import requests
+import httpx
 
 from framework import Agent, FunctionToolkit
 
@@ -27,7 +27,7 @@ system_prompt = f"""
 """
 
 
-def search_web(query: str) -> str:
+async def search_web(query: str) -> str:
     """
     Use this function to search the web.
 
@@ -51,18 +51,19 @@ def search_web(query: str) -> str:
             },
         ],
     }
-    response = requests.request("POST", url, json=payload, headers=headers)
-    try:
-        response.raise_for_status()
-    except Exception:
-        print(f"status: {response.status_code}, text: {response.text}")
-        raise
+    async with httpx.AsyncClient() as client:
+        response = await client.post(url, json=payload, headers=headers)
+        try:
+            response.raise_for_status()
+        except Exception:
+            print(f"status: {response.status_code}, text: {response.text}")
+            raise
 
-    data = response.json()
-    message = data["choices"][0]["message"]
-    content = message["content"]
-    citations = "\n".join(f"{i}. {citation}" for i, citation in enumerate(data["citations"], 1))
-    return f"{content}\n\n{citations}"
+        data = response.json()
+        message = data["choices"][0]["message"]
+        content = message["content"]
+        citations = "\n".join(f"{i}. {citation}" for i, citation in enumerate(data["citations"], 1))
+        return f"{content}\n\n{citations}"
 
 
 assistant = Agent(

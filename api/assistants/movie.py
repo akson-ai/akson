@@ -2,7 +2,7 @@ import os
 import time
 
 import putiopy
-import requests
+import httpx
 
 from framework import Agent, FunctionToolkit
 
@@ -35,16 +35,17 @@ system_prompt = """
 """
 
 
-def search_movie(movie: str, year: int):
+async def search_movie(movie: str, year: int):
     """Search for a movie on the Internet.
     Returns a list of dictionaries, each dictionary contains title and link."""
     query = f"{movie} ({year})"
     print(f"Searching for {query}...")
-    response = requests.get(JACKETT_URL.format(query=query))
-    results = response.json()["Results"]
-    results.sort(key=lambda r: r["Seeders"], reverse=True)
-    results = results[:10]
-    return [{"title": r["Title"], "link": r["MagnetUri"]} for r in results]
+    async with httpx.AsyncClient() as client:
+        response = await client.get(JACKETT_URL.format(query=query))
+        results = response.json()["Results"]
+        results.sort(key=lambda r: r["Seeders"], reverse=True)
+        results = results[:10]
+        return [{"title": r["Title"], "link": r["MagnetUri"]} for r in results]
 
 
 def download_movie(url):

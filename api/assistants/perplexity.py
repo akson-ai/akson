@@ -1,6 +1,6 @@
 import os
 
-import requests
+import httpx
 
 from akson import Assistant, Chat
 
@@ -21,24 +21,25 @@ class Perplexity(Assistant):
             "model": "sonar",
             "messages": self._get_messages(chat),
         }
-        response = requests.request("POST", url, json=payload, headers=headers)
-        try:
-            response.raise_for_status()
-        except Exception:
-            print(response.text)
-            raise
+        async with httpx.AsyncClient() as client:
+            response = await client.post(url, json=payload, headers=headers)
+            try:
+                response.raise_for_status()
+            except Exception:
+                print(response.text)
+                raise
 
         data = response.json()
         message = data["choices"][0]["message"]
         assert message["role"] == "assistant"
-        await chat.begin_message("assistant")
-        await chat.add_chunk("content", message["content"])
-        await chat.end_message()
+        reply = await chat.reply("assistant", "Perplexity")
+        await reply.add_chunk(message["content"])
+        await reply.end()
 
-        citations = "\n\n".join(f"[{i}] {citation}" for i, citation in enumerate(data["citations"], 1))
-        await chat.begin_message("assistant")
-        await chat.add_chunk("content", citations)
-        await chat.end_message()
+        citations = "\n".join(f"{i}. {citation}" for i, citation in enumerate(data["citations"], 1))
+        reply = await chat.reply("assistant", "Perplexity")
+        await reply.add_chunk(citations)
+        await reply.end()
 
     # Takes care of "After the (optional) system message(s), user and assistant roles should be alternating." error.
     def _get_messages(self, chat: Chat) -> list[dict]:
