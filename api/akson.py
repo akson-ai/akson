@@ -128,7 +128,6 @@ class Chat:
     def __init__(
         self,
         *,
-        # assistant: "Assistant",
         state: Optional[ChatState] = None,
         publisher: Optional[Callable[[dict], Coroutine]] = None,
     ):
