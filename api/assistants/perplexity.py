@@ -48,12 +48,12 @@ class Perplexity(Assistant):
             try:
                 last_message = messages[-1]
             except IndexError:
-                messages.append({"role": message["role"], "content": message["content"]})
+                messages.append({"role": message.role, "content": message.content})
             else:
-                if last_message["role"] == message["role"]:
-                    last_message["content"] += "\n\n---\n\n" + message["content"]
+                if last_message["role"] == message.role:
+                    last_message["content"] += "\n\n---\n\n" + message.content
                 else:
-                    messages.append({"role": message["role"], "content": message["content"]})
+                    messages.append({"role": message.role, "content": message.content})
         return messages
 
 
