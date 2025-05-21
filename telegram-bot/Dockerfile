@@ -1,6 +1,10 @@
 FROM python:3.13 AS base
 COPY --from=ghcr.io/astral-sh/uv:0.7.3 /uv /bin/
 
+RUN apt-get update && apt-get install -y \
+    flac \
+    ffmpeg
+
 # Install dependencies first
 WORKDIR /app
 RUN --mount=type=cache,target=/root/.cache/uv \

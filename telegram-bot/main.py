@@ -1,10 +1,13 @@
 import asyncio
 import logging
 import os
+import subprocess
+import tempfile
 import uuid
 from functools import wraps
 from io import StringIO
 
+import speech_recognition as sr
 from akson_client import AksonClient
 from dotenv import load_dotenv
 from telegram import Update
@@ -119,12 +122,67 @@ async def handle_chat(update: Update, _: ContextTypes.DEFAULT_TYPE):
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     assert update.effective_chat
     assert update.message
-    assert update.message.text
+
     logger.info("handle_message")
     await listener.set_telegram_chat_id(update.effective_chat.id)
-    # TODO move typing under "add_chunk" event
-    await context.bot.send_chat_action(chat_id=update.effective_chat.id, action=ChatAction.TYPING)
-    await akson.send_message(listener.akson_chat_id, update.message.text)
+
+    # Handle text messages
+    if update.message.text:
+        # TODO move typing under "add_chunk" event
+        await context.bot.send_chat_action(chat_id=update.effective_chat.id, action=ChatAction.TYPING)
+        await akson.send_message(listener.akson_chat_id, update.message.text)
+
+    # Handle voice/audio messages
+    elif update.message.voice:
+        # TODO move typing under "add_chunk" event
+        await context.bot.send_chat_action(chat_id=update.effective_chat.id, action=ChatAction.TYPING)
+        file = await context.bot.get_file(update.message.voice.file_id)
+
+        # Create a temporary file to save the audio
+        with tempfile.NamedTemporaryFile(suffix=".ogg", delete=False) as temp_file:
+            temp_path = temp_file.name
+
+        try:
+            # Download the audio file
+            await file.download_to_drive(custom_path=temp_path)
+
+            # Initialize the recognizer
+            recognizer = sr.Recognizer()
+
+            # Convert OGG to WAV format using ffmpeg
+            wav_path = temp_path.replace(".ogg", ".wav")
+            subprocess.run(["ffmpeg", "-i", temp_path, wav_path], check=True)
+
+            # Use the converted WAV file with SpeechRecognition
+            with sr.AudioFile(wav_path) as source:
+                audio_data = recognizer.record(source)
+
+                # Transcribe the audio using Google's speech recognition
+                # The recognize_google method is part of the SpeechRecognition library
+                transcription = recognizer.recognize_google(audio_data)  # type: ignore
+                logger.info(f"Transcription: {transcription}")
+        except Exception as e:
+            logger.error(f"Error processing audio: {e}")
+            await context.bot.send_message(chat_id=update.effective_chat.id, text=f"Error processing audio: {e}")
+        else:
+            # Send a notification that we're processing an audio message
+            await context.bot.send_message(
+                chat_id=update.effective_chat.id,
+                text="🎤 *Audio transcription:*\n" + markdownify(transcription),
+                parse_mode=ParseMode.MARKDOWN_V2,
+            )
+
+            # Send the transcribed text to Akson
+            await akson.send_message(listener.akson_chat_id, transcription)
+        finally:
+            # Clean up the temporary files
+            try:
+                os.unlink(temp_path)
+                wav_path = temp_path.replace(".ogg", ".wav")
+                if os.path.exists(wav_path):
+                    os.unlink(wav_path)
+            except Exception as e:
+                logger.error(f"Error removing temporary files: {e}")
 
 
 application = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
