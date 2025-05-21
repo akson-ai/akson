@@ -69,16 +69,22 @@ class Listener:
                 case "begin_message":
                     content.truncate(0)
                     if self.telegram_chat_id:
-                        await self.app.bot.send_chat_action(chat_id=self.telegram_chat_id, action=ChatAction.TYPING)
+                        await self.app.bot.send_chat_action(
+                            chat_id=self.telegram_chat_id,
+                            action=ChatAction.TYPING,
+                        )
                 case "add_chunk":
                     if event["location"] == "content":
                         content.write(event["chunk"])
                 case "end_message":
                     if self.telegram_chat_id:
-                        text = markdownify(content.getvalue())
-                        await self.app.bot.send_message(
-                            chat_id=self.telegram_chat_id, text=text, parse_mode=ParseMode.MARKDOWN_V2
-                        )
+                        text = markdownify(content.getvalue()).strip()
+                        if text:
+                            await self.app.bot.send_message(
+                                chat_id=self.telegram_chat_id,
+                                text=text,
+                                parse_mode=ParseMode.MARKDOWN_V2,
+                            )
                     content.truncate(0)
 
 
