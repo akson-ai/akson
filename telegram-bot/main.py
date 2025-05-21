@@ -109,6 +109,13 @@ async def handle_new(update: Update, _: ContextTypes.DEFAULT_TYPE):
 
 
 @restricted
+async def handle_chat(update: Update, _: ContextTypes.DEFAULT_TYPE):
+    assert update.message
+    logger.info("handle_chat")
+    await update.message.reply_text(text=f"Chat ID: {listener.akson_chat_id}")
+
+
+@restricted
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     assert update.effective_chat
     assert update.message
@@ -123,5 +130,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 application = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
 application.post_init = post_init
 application.add_handler(CommandHandler("new", handle_new))
+application.add_handler(CommandHandler("chat", handle_chat))
 application.add_handler(MessageHandler(filters.ALL, handle_message))
 application.run_polling()
