@@ -9,7 +9,7 @@ from litellm.types.utils import (
 )
 from pydantic import BaseModel
 
-# Allowed locations for streaming chunks
+# Allowed fields for streaming chunks
 EventType = Literal["content", "tool_call.id", "tool_call.name", "tool_call.arguments"]
 
 

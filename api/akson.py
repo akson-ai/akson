@@ -100,8 +100,7 @@ class Reply:
             {
                 "type": "add_chunk",
                 "id": self.message.id,
-                # TODO rename as field
-                "location": field,
+                "field": field,
                 "chunk": chunk,
             }
         )

@@ -31,11 +31,11 @@ export function useEvents(chatId, setMessages, setSelectedAssistant) {
           const i = prev.length - 1;
           const message = structuredClone(prev[i]);
 
-          if (!message.toolCall && ["tool_call.name", "tool_call.arguments"].includes(data.location)) {
+          if (!message.toolCall && ["tool_call.name", "tool_call.arguments"].includes(data.field)) {
             message.toolCall = { name: "", arguments: "" };
           }
 
-          switch (data.location) {
+          switch (data.field) {
             case "content":
               message.content += data.chunk;
               break;

@@ -77,7 +77,7 @@ class Listener:
                             action=ChatAction.TYPING,
                         )
                 case "add_chunk":
-                    if event["location"] in ("content", "tool_call.name", "tool_call.arguments"):
+                    if event["field"] in ("content", "tool_call.name", "tool_call.arguments"):
                         content.write(event["chunk"])
                 case "end_message":
                     if self.telegram_chat_id:
