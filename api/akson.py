@@ -115,7 +115,6 @@ class Reply:
         )
         self.chat.new_messages.append(self.message)
         self.chat.state.messages.append(self.message)
-        self.chat.state.save_to_disk()
 
 
 class Chat:
