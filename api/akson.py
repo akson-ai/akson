@@ -37,6 +37,7 @@ class ChatState(BaseModel):
     def create_new(cls, id: str, assistant: str):
         return cls(id=id, assistant=assistant)
 
+    # TODO make this instance method
     @classmethod
     def load_from_disk(cls, chat_id: str):
         with open(cls.file_path(chat_id), "r") as f:
