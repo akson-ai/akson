@@ -1,3 +1,4 @@
+import asyncio
 import json
 from typing import Optional
 
@@ -41,9 +42,16 @@ class AksonClient:
         return response.json()
 
     async def stream_events(self, chat_id: str):
-        async with self.client.stream("GET", f"/{chat_id}/events", timeout=None) as response:
-            async for line in response.aiter_lines():
-                prefix = "data: "
-                if line.startswith(prefix):
-                    data = json.loads(line[len(prefix) :])
-                    yield data
+        while True:
+            try:
+                async with self.client.stream("GET", f"/{chat_id}/events", timeout=None) as response:
+                    async for line in response.aiter_lines():
+                        prefix = "data: "
+                        if line.startswith(prefix):
+                            data = json.loads(line[len(prefix) :])
+                            yield data
+            except Exception as e:
+                # Log the error and retry after 1 second
+                print(f"Connection lost in stream_events: {e}. Retrying in 1 second...")
+                await asyncio.sleep(1)
+                continue
