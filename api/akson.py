@@ -144,15 +144,9 @@ class Chat:
         # Publishes messages to clients.
         self.publisher = publisher
 
-        # These will be set by the Assistant.run() method.
-        self._structured_output: Optional[BaseModel] = None
-
     async def reply(self, role: Literal["assistant", "tool"], name: str) -> Reply:
         # category: Optional[Literal["info", "success", "warning", "error"]] = None,
         return await Reply.create(chat=self, role=role, name=name)
-
-    async def set_structured_output(self, output: BaseModel):
-        self._structured_output = output
 
     async def _queue_message(self, message: dict):
         if self.publisher:

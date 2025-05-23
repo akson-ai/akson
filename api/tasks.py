@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from akson import Chat, ChatState
+from akson import Assistant, Chat, ChatState
 from framework import Agent
 
 
@@ -11,7 +11,7 @@ async def update_title(chat: Chat):
     class TitleResponse(BaseModel):
         title: str
 
-    titler = Agent(
+    titler: Assistant = Agent(
         name="Titler",
         model="gpt-4.1-nano",
         system_prompt="Analyze the conversation and output a title for the conversation.",

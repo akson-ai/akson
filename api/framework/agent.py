@@ -144,17 +144,8 @@ class Agent(Assistant):
 
             if finish_reason := choice.finish_reason:
                 message = builder.getvalue()
-                if finish_reason == "stop":
-                    if self.output_type:
-                        assert isinstance(message.content, str)
-                        instance = self.output_type.model_validate_json(message.content)
-                        await chat.set_structured_output(instance)
-                elif finish_reason == "tool_calls":
-                    assert message.tool_calls
-                    assert len(message.tool_calls) == 1
-                else:
+                if finish_reason not in ("stop", "tool_calls"):
                     raise NotImplementedError(f"finish_reason={finish_reason}")
-
                 await reply.end()
 
         if not message:
