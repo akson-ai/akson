@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from akson import Chat
+from akson import Chat, ChatState
 from framework import Agent
 
 
@@ -11,18 +11,23 @@ async def update_title(chat: Chat):
     class TitleResponse(BaseModel):
         title: str
 
-    instructions = """
-        You are a helpful summarizer.
-        Your input is the first 2 messages of a conversation.
-        Output a title for the conversation.
-    """
-    input = (
-        f"<user>{chat.state.messages[0].content}</user>\n\n" f"<assistant>{chat.state.messages[1].content}</assistant>"
+    titler = Agent(
+        name="Titler",
+        model="gpt-4.1-nano",
+        system_prompt="Analyze the conversation and output a title for the conversation.",
+        output_type=TitleResponse,
     )
-    titler = Agent(name="Titler", model="gpt-4.1-nano", system_prompt=instructions, output_type=TitleResponse)
-    response = await titler.respond(input)
-    assert isinstance(response, TitleResponse)
-    chat.state.title = response.title
+
+    temp = Chat()
+    temp.state.messages = chat.state.messages.copy()
+
+    await titler.run(temp)
+
+    output = temp.state.messages[-1].content
+    instance = TitleResponse.model_validate_json(output)
+
+    # TODO Fix race condition. Lock?
+    state = ChatState.load_from_disk(chat.state.id)
+    state.title = instance.title
+    state.save_to_disk()
     await chat._queue_message({"type": "update_title", "title": chat.state.title})
-    # TODO Fix race condition
-    chat.state.save_to_disk()

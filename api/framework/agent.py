@@ -53,21 +53,6 @@ class Agent(Assistant):
         self.max_turns = max_turns
         self.examples: list[tuple[str, BaseModel]] = []
 
-    async def respond(self, user_message: str) -> str | BaseModel:
-        chat = Chat()
-        chat.state.messages.append(
-            Message(
-                role="user",
-                content=user_message,
-            )
-        )
-        await self.run(chat)
-
-        if chat._structured_output:
-            return chat._structured_output
-        else:
-            return chat.state.messages[-1].content
-
     async def run(self, chat: Chat) -> None:
         logger.info("Running assistant %s", self.name)
 
