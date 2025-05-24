@@ -2,5 +2,5 @@ from framework import Agent
 
 claude = Agent(
     name="Claude",
-    model="claude-3-7-sonnet-latest",
+    model="claude-sonnet-4-20250514",
 )
