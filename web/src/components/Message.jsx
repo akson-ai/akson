@@ -88,7 +88,7 @@ function Message({ id, role, name, content, toolCall, category, onDelete }) {
           </div>
         )}
       </div>
-      {content && (
+      {(content || toolCall) && (
         <div className={`chat-footer mt-1 ${isHovered ? "visible" : "invisible"}`}>
           <>
             <button
