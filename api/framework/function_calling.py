@@ -103,8 +103,8 @@ def function_to_pydantic_model(func):
 
 class MCPToolkit(Toolkit):
 
-    def __init__(self, command: str, args: list[str] = []):
-        self.server_params = StdioServerParameters(command=command, args=args)
+    def __init__(self, command: str, args: list[str] = [], env: dict[str, str] | None = None):
+        self.server_params = StdioServerParameters(command=command, args=args, env=env)
 
     async def get_tools(self) -> list[ChatCompletionToolParam]:
         async with stdio_client(self.server_params) as (read, write):
