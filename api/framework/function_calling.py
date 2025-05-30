@@ -142,10 +142,10 @@ class MCPToolkit(Toolkit):
                     result = await session.call_tool(tool_call.function.name, arguments=arguments)
                     logger.debug(f"Result: {result}")
                     output.append(
-                        {
-                            "role": "tool",
-                            "content": str(result),
-                            "tool_call_id": tool_call.id,
-                        }
+                        Message(
+                            role="tool",  # type: ignore
+                            content=str(result),
+                            tool_call_id=tool_call.id,
+                        )
                     )
                 return output
