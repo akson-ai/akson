@@ -3,6 +3,7 @@ import pathlib
 
 import httpx
 
+from akson import Chat, Message
 from framework import Agent, FunctionToolkit
 
 PERPLEXITY_API_KEY = os.environ["PERPLEXITY_API_KEY"]
@@ -66,8 +67,32 @@ async def search_web(query: str) -> str:
         return f"{content}\n\n{citations}"
 
 
+async def find_movie(name: str) -> str:
+    """
+    Use this tool to find and download movies.
+
+    Args:
+      name (str): The name of the movie
+
+    Returns:
+      str: Web page URL of the movie
+    """
+    from deps import registry
+
+    assistant = registry.get_assistant("Movie")
+    chat = Chat()
+    chat.state.messages.append(
+        Message(
+            role="user",
+            content=f"I want to watch {name}. Find and download the movie.",
+        )
+    )
+    await assistant.run(chat)
+    return chat.state.messages[-1].content
+
+
 assistant = Agent(
     name="Waffle",
     system_prompt=system_prompt,
-    toolkit=FunctionToolkit([search_web]),
+    toolkit=FunctionToolkit([search_web, find_movie]),
 )
