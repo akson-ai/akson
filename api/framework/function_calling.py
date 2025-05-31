@@ -31,7 +31,7 @@ class FunctionToolkit(Toolkit):
 
     def __init__(self, functions: list[Callable]) -> None:
         self.functions = {f.__name__: f for f in functions}
-        self.models = {f.__name__: function_to_pydantic_model(f) for f in functions}
+        self.models = {f.__name__: _function_to_pydantic_model(f) for f in functions}
         self.tools = [pydantic_function_tool(model) for model in self.models.values()]
 
     async def get_tools(self) -> list[ChatCompletionToolParam]:
@@ -73,7 +73,7 @@ class FunctionToolkit(Toolkit):
         return messages
 
 
-def function_to_pydantic_model(func):
+def _function_to_pydantic_model(func):
     sig = signature(func)
     type_hints = get_type_hints(func)
     docstring = getdoc(func)
