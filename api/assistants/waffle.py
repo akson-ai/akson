@@ -1,16 +1,5 @@
-import os
-import pathlib
-
 from akson import Chat, Message
 from framework import Agent, AssistantToolkit, FunctionToolkit, MultiToolkit
-
-PERPLEXITY_API_KEY = os.environ["PERPLEXITY_API_KEY"]
-
-# Load the Perplexity prompt guide from the markdown file
-# Genrated with r.jina.ai/https://docs.perplexity.ai/guides/prompt-guide
-prompt_guide_path = pathlib.Path(__file__).parent / "prompts" / "perplexity_prompt_guide.md"
-with open(prompt_guide_path, "r") as f:
-    perplexity_prompt_guide = f.read()
 
 system_prompt = f"""
     You are Waffle, a personal AI assistant.
@@ -21,8 +10,6 @@ system_prompt = f"""
     2. The information is dynamic and changes frequently (like current events, weather, or live data)
     3. The user explicitly requests current information
     For all other queries, use your existing knowledge to provide accurate and helpful responses.
-
-    {perplexity_prompt_guide}
 """
 
 
