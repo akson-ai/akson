@@ -5,12 +5,16 @@ from akson import Assistant, Chat, Message
 
 class Runner:
 
-    def __init__(self, assistant: Assistant, chat: Chat):
+    def __init__(self, assistant: Assistant, chat: Chat | None = None):
         self.assistant = assistant
+        if not chat:
+            chat = Chat()
         self.chat = chat
 
     @observe()
-    async def run(self, user_message: Message) -> list[Message]:
+    async def run(self, user_message: Message | str) -> list[Message]:
+        if isinstance(user_message, str):
+            user_message = Message(role="user", content=user_message)
         langfuse_context.update_current_trace(
             name=self.assistant.name,
             session_id=self.chat.state.id,

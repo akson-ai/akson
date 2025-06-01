@@ -1,10 +1,8 @@
 import os
 import pathlib
 
-import httpx
-
 from akson import Chat, Message
-from framework import Agent, FunctionToolkit
+from framework import Agent, AssistantToolkit, FunctionToolkit, MultiToolkit
 
 PERPLEXITY_API_KEY = os.environ["PERPLEXITY_API_KEY"]
 
@@ -26,45 +24,6 @@ system_prompt = f"""
 
     {perplexity_prompt_guide}
 """
-
-
-async def search_web(query: str) -> str:
-    """
-    Use this function to search the web.
-
-    Args:
-      query (str): The query to search for
-
-    Returns:
-      str: The search results
-    """
-    url = "https://api.perplexity.ai/chat/completions"
-    headers = {
-        "Authorization": f"Bearer {PERPLEXITY_API_KEY}",
-        "Content-Type": "application/json",
-    }
-    payload = {
-        "model": "sonar",  # https://docs.perplexity.ai/guides/model-cards
-        "messages": [
-            {
-                "role": "user",
-                "content": query,
-            },
-        ],
-    }
-    async with httpx.AsyncClient(timeout=60) as client:
-        response = await client.post(url, json=payload, headers=headers)
-        try:
-            response.raise_for_status()
-        except Exception:
-            print(f"status: {response.status_code}, text: {response.text}")
-            raise
-
-        data = response.json()
-        message = data["choices"][0]["message"]
-        content = message["content"]
-        citations = "\n".join(f"{i}. {citation}" for i, citation in enumerate(data["citations"], 1))
-        return f"{content}\n\n{citations}"
 
 
 async def find_movie(name: str) -> str:
@@ -94,5 +53,10 @@ async def find_movie(name: str) -> str:
 assistant = Agent(
     name="Waffle",
     system_prompt=system_prompt,
-    toolkit=FunctionToolkit([search_web, find_movie]),
+    toolkit=MultiToolkit(
+        [
+            FunctionToolkit([find_movie]),
+            AssistantToolkit(["WebSearch"]),
+        ],
+    ),
 )

@@ -1,6 +1,7 @@
 import asyncio
 import json
 from abc import ABC, abstractmethod
+from enum import StrEnum
 from inspect import Parameter, getdoc, signature
 from typing import Callable, get_type_hints
 
@@ -11,9 +12,10 @@ from mcp.client.stdio import stdio_client
 from openai import pydantic_function_tool
 from openai.types.chat import ChatCompletionToolParam
 from openai.types.shared_params import FunctionDefinition
-from pydantic import Field, create_model
+from pydantic import BaseModel, Field, create_model
 
 from logger import logger
+from runner import Runner
 
 
 class Toolkit(ABC):
@@ -24,6 +26,25 @@ class Toolkit(ABC):
 
     @abstractmethod
     async def handle_tool_calls(self, tool_calls: list[ChatCompletionMessageToolCall]) -> list[Message]: ...
+
+
+class MultiToolkit(Toolkit):
+    """Combines multiple toolkits into one."""
+
+    def __init__(self, toolkits: list[Toolkit]) -> None:
+        self.toolkits = toolkits
+
+    async def get_tools(self) -> list[ChatCompletionToolParam]:
+        tools = []
+        for toolkit in self.toolkits:
+            tools.extend(await toolkit.get_tools())
+        return tools
+
+    async def handle_tool_calls(self, tool_calls: list[ChatCompletionMessageToolCall]) -> list[Message]:
+        messages = []
+        for toolkit in self.toolkits:
+            messages.extend(await toolkit.handle_tool_calls(tool_calls))
+        return messages
 
 
 class FunctionToolkit(Toolkit):
@@ -45,6 +66,8 @@ class FunctionToolkit(Toolkit):
         for tool_call in tool_calls:
             function = tool_call.function
             assert isinstance(function.name, str)
+            if function.name not in self.functions:
+                continue
             logger.info("Tool call: %s(%s)", function.name, function.arguments)
             func = self.functions[function.name]
             model = self.models[function.name]
@@ -135,6 +158,7 @@ class MCPToolkit(Toolkit):
                 await session.initialize()
                 output = []
                 for tool_call in tool_calls:
+                    # TODO skip tool calls that are not for this toolkit
                     logger.info(f"Executing tool call: {tool_call}")
                     arguments = json.loads(tool_call.function.arguments)
                     assert isinstance(arguments, dict)
@@ -149,3 +173,47 @@ class MCPToolkit(Toolkit):
                         )
                     )
                 return output
+
+
+class AssistantToolkit(Toolkit):
+
+    TOOL_NAME = "send_message"
+
+    def __init__(self, assistants: list[str]):
+        self.assitants = assistants
+
+    async def get_tools(self) -> list[ChatCompletionToolParam]:
+        assistants_enum = StrEnum("Recipient", self.assitants)
+
+        class SendMessage(BaseModel):
+            """
+            Send a message to an assistant.
+            Output will be the response from the assistant.
+            """
+
+            recipient: assistants_enum
+            message: str
+
+        return [pydantic_function_tool(SendMessage, name=self.TOOL_NAME)]
+
+    async def handle_tool_calls(self, tool_calls: list[ChatCompletionMessageToolCall]) -> list[Message]:
+        from deps import registry
+
+        ret = []
+        for tool_call in tool_calls:
+            if tool_call.function.name != self.TOOL_NAME:
+                continue
+            logger.info(f"Executing tool call: {tool_call}")
+            arguments = json.loads(tool_call.function.arguments)
+            assistant = registry.get_assistant(arguments["recipient"])
+            assistant_messages = await Runner(assistant).run(arguments["message"])
+            result = "\n\n".join([message.content for message in assistant_messages])
+            logger.debug(f"Result: {result}")
+            ret.append(
+                Message(
+                    role="tool",  # type: ignore
+                    content=result,
+                    tool_call_id=tool_call.id,
+                )
+            )
+        return ret
