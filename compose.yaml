@@ -24,6 +24,7 @@ services:
       - ${AKSON_API_PORT}:8000
     volumes:
       - ./api/chats:/app/chats
+      - /var/run/docker.sock:/var/run/docker.sock
     environment:
       - ALLOW_ORIGINS=${AKSON_WEB_EXTERNAL_URL}
     env_file:

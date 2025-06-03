@@ -2,7 +2,7 @@ FROM python:3.12 AS base
 COPY --from=ghcr.io/astral-sh/uv:0.6.17 /uv /uvx /bin/
 
 # Install npm for running MCP servers written in Javascript
-RUN apt-get update && apt-get install -y npm
+RUN apt-get update && apt-get install -y docker.io npm
 
 # Install dependencies first
 WORKDIR /app
