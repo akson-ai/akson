@@ -32,7 +32,7 @@ export function useEvents(chatId, setMessages, setSelectedAssistant) {
           const message = structuredClone(prev[i]);
 
           if (!message.toolCall && ["tool_call.name", "tool_call.arguments"].includes(data.field)) {
-            message.toolCall = { name: "", arguments: "" };
+            message.toolCall = { name: "", arguments: "", toolCallId: "" };
           }
 
           switch (data.field) {
@@ -44,6 +44,9 @@ export function useEvents(chatId, setMessages, setSelectedAssistant) {
               break;
             case "tool_call.arguments":
               message.toolCall.arguments += data.chunk;
+              break;
+            case "tool_call_id":
+              message.toolCallId += data.chunk;
               break;
           }
 

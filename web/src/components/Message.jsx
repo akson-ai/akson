@@ -6,7 +6,7 @@ import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { FaTrash, FaCopy, FaChevronRight, FaChevronDown } from "react-icons/fa6";
 import { FaTools } from "react-icons/fa";
 
-function Message({ id, role, name, content, toolCall, category, onDelete }) {
+function Message({ id, role, name, content, toolCall, toolCallId, category, onDelete }) {
   const [isHovered, setIsHovered] = useState(false);
   const [isToolExpanded, setIsToolExpanded] = useState(false);
   const categoryTag = category ? `chat-bubble-${category}` : "";
@@ -57,7 +57,7 @@ function Message({ id, role, name, content, toolCall, category, onDelete }) {
         <time className="text-xs opacity-50">{name || "You"}</time>
       </div>
       <div className={`chat-bubble ${categoryTag} mt-1`}>
-        {!(content || toolCall) ? (
+        {!(content || toolCall || toolCallId) ? (
           <div className="flex items-center">
             <div className="loading loading-spinner loading-sm mr-2"></div>
             <span>Thinking...</span>

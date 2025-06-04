@@ -66,9 +66,9 @@ class Agent(Assistant):
             for tool_message in tool_messages:
                 messages.append(tool_message)
                 reply = await chat.reply("tool", name=self.name)
+                await reply.add_chunk(tool_message["tool_call_id"], field="tool_call_id")
                 if tool_message.content:
                     await reply.add_chunk(tool_message.content)
-                await reply.add_chunk(tool_message["tool_call_id"], field="tool_call_id")
                 await reply.end()
 
         # We start by sending the first message.

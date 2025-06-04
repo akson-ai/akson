@@ -25,6 +25,7 @@ function ChatApp({ chatId }) {
         name: msg.name,
         content: msg.content,
         toolCall: msg.tool_call,
+        toolCallId: msg.tool_call_id,
         category: msg.category,
       })),
     );
