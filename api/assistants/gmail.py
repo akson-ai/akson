@@ -5,7 +5,7 @@ from framework import Agent, MCPToolkit
 GMAIL_KEYS_DIR = os.environ["GMAIL_KEYS_DIR"]
 NPM_CACHE_DIR = os.environ["NPM_CACHE_DIR"]
 
-cmd = [
+docker_command = [
     "docker",
     "run",
     "-i",
@@ -22,12 +22,12 @@ cmd = [
     "GMAIL_OAUTH_PATH=/keys/gcp-oauth.keys.json",
     "-e",
     "GMAIL_CREDENTIALS_PATH=/keys/credentials.json",
-    "-p",
-    "3000:3000",
-    "node:24",
-    "exec",
-    "@gongrzhe/server-gmail-autoauth-mcp",
 ]
+port_binding = ["-p", "3000:3000"]  # required to open this port for auth callback during auth command
+image_command = ["node:24", "exec", "@gongrzhe/server-gmail-autoauth-mcp"]
+
+auth_command = docker_command + port_binding + image_command
+mcp_command = docker_command + image_command
 
 gmail = Agent(
     name="Gmail",
@@ -35,7 +35,7 @@ gmail = Agent(
         "You are Gmail assistant."
         "Try bringing at least 100 results when searching for emails."
         "Get confirmation before performing any actions that modify data."
-        f"When access token is not valid, instruct user to authenticate by running `{' '.join(cmd)} auth` command."
+        f"When access token is not valid, instruct user to authenticate by running `{' '.join(auth_command)} auth` command."
     ),
-    toolkit=MCPToolkit(command=cmd[0], args=cmd[1:]),
+    toolkit=MCPToolkit(command=mcp_command[0], args=mcp_command[1:]),
 )
