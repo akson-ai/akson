@@ -165,10 +165,11 @@ class MCPToolkit(Toolkit):
                     assert isinstance(tool_call.function.name, str)
                     result = await session.call_tool(tool_call.function.name, arguments=arguments)
                     logger.debug(f"Result: {result}")
+                    result_str = "\n\n".join(content.text for content in result.content if content.type == "text")
                     output.append(
                         Message(
                             role="tool",  # type: ignore
-                            content=str(result),
+                            content=result_str,
                             tool_call_id=tool_call.id,
                         )
                     )
