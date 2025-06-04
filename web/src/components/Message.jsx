@@ -3,12 +3,45 @@ import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
-import { FaTrash, FaCopy } from "react-icons/fa6";
+import { FaTrash, FaCopy, FaChevronRight, FaChevronDown } from "react-icons/fa6";
 import { FaTools } from "react-icons/fa";
 
 function Message({ id, role, name, content, toolCall, category, onDelete }) {
   const [isHovered, setIsHovered] = useState(false);
+  const [isToolExpanded, setIsToolExpanded] = useState(false);
   const categoryTag = category ? `chat-bubble-${category}` : "";
+
+  const renderMarkdownContent = (content) => (
+    <Markdown
+      remarkPlugins={[remarkGfm]}
+      components={{
+        code({ className, children, ...props }) {
+          const match = /language-(\w+)/.exec(className || "");
+          const code = String(children).replace(/\n$/, "");
+          return match ? (
+            <div className="relative group">
+              <button
+                className="absolute top-2 right-2 btn btn-xs btn-ghost btn-square opacity-0 group-hover:opacity-100 transition-opacity"
+                onClick={() => navigator.clipboard.writeText(code)}
+                title="Copy code"
+              >
+                <FaCopy />
+              </button>
+              <SyntaxHighlighter style={vscDarkPlus} language={match[1]} {...props}>
+                {code}
+              </SyntaxHighlighter>
+            </div>
+          ) : (
+            <code className={className} {...props}>
+              {children}
+            </code>
+          );
+        },
+      }}
+    >
+      {content}
+    </Markdown>
+  );
   return (
     <div
       className={`chat ${role === "user" ? "chat-end" : "chat-start"}`}
@@ -31,50 +64,30 @@ function Message({ id, role, name, content, toolCall, category, onDelete }) {
           </div>
         ) : (
           <div>
-            {role == "tool" && (
-              <div className="mt-2 border-t border-base-300">
-                <div className="flex items-center gap-2 text-sm opacity-70">
+            {role === "tool" ? (
+              <div>
+                <button
+                  className="flex items-center gap-2 text-sm opacity-70 hover:opacity-100 transition-opacity cursor-pointer w-full text-left"
+                  onClick={() => setIsToolExpanded(!isToolExpanded)}
+                >
+                  {isToolExpanded ? <FaChevronDown /> : <FaChevronRight />}
                   <FaTools />
-                  <span>Result:</span>
-                </div>
+                  <span>Tool Result</span>
+                </button>
+                {isToolExpanded && (
+                  <div className="mt-2 border-t border-base-300 pt-2">
+                    <div className={categoryTag ? "" : "prose"}>{renderMarkdownContent(content)}</div>
+                  </div>
+                )}
               </div>
+            ) : (
+              <div className={categoryTag ? "" : "prose"}>{renderMarkdownContent(content)}</div>
             )}
-            <div className={categoryTag ? "" : "prose"}>
-              <Markdown
-                remarkPlugins={[remarkGfm]}
-                components={{
-                  code({ className, children, ...props }) {
-                    const match = /language-(\w+)/.exec(className || "");
-                    const code = String(children).replace(/\n$/, "");
-                    return match ? (
-                      <div className="relative group">
-                        <button
-                          className="absolute top-2 right-2 btn btn-xs btn-ghost btn-square opacity-0 group-hover:opacity-100 transition-opacity"
-                          onClick={() => navigator.clipboard.writeText(code)}
-                          title="Copy code"
-                        >
-                          <FaCopy />
-                        </button>
-                        <SyntaxHighlighter style={vscDarkPlus} language={match[1]} {...props}>
-                          {code}
-                        </SyntaxHighlighter>
-                      </div>
-                    ) : (
-                      <code className={className} {...props}>
-                        {children}
-                      </code>
-                    );
-                  },
-                }}
-              >
-                {content}
-              </Markdown>
-            </div>
             {toolCall && (
               <div className="mt-2 border-t border-base-300 pt-2">
                 <div className="flex items-center gap-2 text-sm opacity-70">
                   <FaTools />
-                  <span>Tool call:</span>
+                  <span>Tool Call</span>
                 </div>
                 <div className="mt-1 space-y-1">
                   <div className="text-sm font-mono bg-base-200 p-2 rounded">
