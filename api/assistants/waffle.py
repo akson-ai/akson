@@ -43,7 +43,7 @@ assistant = Agent(
     toolkit=MultiToolkit(
         [
             FunctionToolkit([find_movie]),
-            AssistantToolkit(["WebSearch"]),
+            AssistantToolkit(["WebSearch", "Gmail"]),
         ],
     ),
 )
