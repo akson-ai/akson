@@ -64,10 +64,10 @@ class Agent(Assistant):
             assert message.tool_calls
             tool_messages = await self.toolkit.handle_tool_calls(message.tool_calls)
             for tool_message in tool_messages:
-                assert tool_message.content
                 messages.append(tool_message)
                 reply = await chat.reply("tool", name=self.name)
-                await reply.add_chunk(tool_message.content)
+                if tool_message.content:
+                    await reply.add_chunk(tool_message.content)
                 await reply.add_chunk(tool_message["tool_call_id"], field="tool_call_id")
                 await reply.end()
 
