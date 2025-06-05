@@ -56,19 +56,14 @@ assistant = Agent(
                 FastMCPClient(
                     {
                         "mcpServers": {
-                            "fetch": {"command": "uvx", "args": ["mcp-server-fetch"]},
-                        }
-                    }
-                )
-            ),
-            FastMCPToolkit(
-                FastMCPClient(
-                    {
-                        "mcpServers": {
+                            "fetch": {
+                                "command": "uvx",
+                                "args": ["mcp-server-fetch"],
+                            },
                             "sequential-thinking": {
                                 "command": "npx",
                                 "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"],
-                            }
+                            },
                         }
                     }
                 )
