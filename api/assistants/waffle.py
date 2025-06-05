@@ -52,6 +52,7 @@ assistant = Agent(
     toolkit=MultiToolkit(
         [
             FunctionToolkit([find_movie]),
+            AssistantToolkit(["WebSearch", "Gmail"]),
             MCPToolkit(
                 FastMCPClient(
                     {
@@ -68,7 +69,6 @@ assistant = Agent(
                     }
                 )
             ),
-            AssistantToolkit(["WebSearch", "Gmail"]),
         ],
     ),
 )
