@@ -190,24 +190,23 @@ class MCPToolkit(Toolkit):
 
 class AssistantToolkit(Toolkit):
 
-    TOOL_NAME = "send_message"
+    TOOL_NAME = "delegate_task"
 
     def __init__(self, assistants: list[str]):
         self.assitants = assistants
 
     async def get_tools(self) -> list[ChatCompletionToolParam]:
-        assistants_enum = StrEnum("Recipient", self.assitants)
+        assistant_enum = StrEnum("Assistant", self.assitants)
 
-        class SendMessage(BaseModel):
+        class DelegateTask(BaseModel):
             """
-            Send a message to an assistant.
-            Output will be the response from the assistant.
+            Delegate a task to an assistant.
             """
 
-            recipient: assistants_enum
-            message: str
+            assistant: assistant_enum
+            task: str
 
-        return [pydantic_function_tool(SendMessage, name=self.TOOL_NAME)]
+        return [pydantic_function_tool(DelegateTask, name=self.TOOL_NAME)]
 
     async def handle_tool_calls(self, tool_calls: list[ChatCompletionMessageToolCall]) -> list[Message]:
         from deps import registry
