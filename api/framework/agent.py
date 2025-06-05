@@ -63,6 +63,7 @@ class Agent(Assistant):
             assert self.toolkit
             assert message.tool_calls
             tool_messages = await self.toolkit.handle_tool_calls(message.tool_calls)
+            assert len(tool_messages) == len(message.tool_calls)
             for tool_message in tool_messages:
                 messages.append(tool_message)
                 reply = await chat.reply("tool", name=self.name)
