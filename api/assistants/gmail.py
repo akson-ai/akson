@@ -37,5 +37,5 @@ gmail = Agent(
         "Get confirmation before performing any actions that modify data."
         f"When access token is not valid, instruct user to authenticate by running `{' '.join(auth_command)} auth` command."
     ),
-    toolkit=MCPToolkit(command=mcp_command[0], args=mcp_command[1:]),
+    toolkit=MCPToolkit.from_config(command=mcp_command[0], args=mcp_command[1:]),
 )

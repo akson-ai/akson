@@ -6,7 +6,7 @@ vault = "/Users/cenk/Library/Mobile Documents/iCloud~md~obsidian/Documents/my-va
 obsidian = Agent(
     name="Obsidian",
     system_prompt="You are Obsidian assistant.",
-    toolkit=MCPToolkit(
+    toolkit=MCPToolkit.from_config(
         command="npx",
         args=["-y", "mcp-obsidian", vault],
     ),

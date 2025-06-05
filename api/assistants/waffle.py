@@ -4,8 +4,8 @@ from akson import Chat, Message
 from framework import (
     Agent,
     AssistantToolkit,
-    FastMCPToolkit,
     FunctionToolkit,
+    MCPToolkit,
     MultiToolkit,
 )
 
@@ -52,7 +52,7 @@ assistant = Agent(
     toolkit=MultiToolkit(
         [
             FunctionToolkit([find_movie]),
-            FastMCPToolkit(
+            MCPToolkit(
                 FastMCPClient(
                     {
                         "mcpServers": {

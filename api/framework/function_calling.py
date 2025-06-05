@@ -8,8 +8,6 @@ from typing import Callable, get_type_hints
 import docstring_parser
 from fastmcp import Client as FastMCPClient
 from litellm import ChatCompletionMessageToolCall, Message
-from mcp import ClientSession, StdioServerParameters
-from mcp.client.stdio import stdio_client
 from openai import pydantic_function_tool
 from openai.types.chat import ChatCompletionToolParam
 from openai.types.shared_params import FunctionDefinition
@@ -127,63 +125,15 @@ def _function_to_pydantic_model(func):
 
 class MCPToolkit(Toolkit):
 
-    def __init__(self, command: str, args: list[str] = [], env: dict[str, str] | None = None):
-        self.server_params = StdioServerParameters(command=command, args=args, env=env)
-
-    async def get_tools(self) -> list[ChatCompletionToolParam]:
-        async with stdio_client(self.server_params) as (read, write):
-            async with ClientSession(read, write) as session:
-                await session.initialize()
-                out = []
-                tools = await session.list_tools()
-                logger.info(f"Got {len(tools.tools)} tools.")
-                for tool in tools.tools:
-                    schema = dict(tool.inputSchema)
-                    schema["required"] = list(schema["properties"].keys())
-                    schema["additionalProperties"] = False
-                    param = ChatCompletionToolParam(
-                        type="function",
-                        function=FunctionDefinition(
-                            name=tool.name,
-                            description=tool.description or "",
-                            parameters=schema,
-                            strict=True,
-                        ),
-                    )
-                    out.append(param)
-                return out
-
-    async def handle_tool_calls(self, tool_calls: list[ChatCompletionMessageToolCall]) -> list[Message]:
-        async with stdio_client(self.server_params) as (read, write):
-            async with ClientSession(read, write) as session:
-                await session.initialize()
-                output = []
-                for tool_call in tool_calls:
-                    # TODO skip tool calls that are not for this toolkit
-                    logger.info(f"Executing tool call: {tool_call}")
-                    arguments = json.loads(tool_call.function.arguments)
-                    assert isinstance(arguments, dict)
-                    assert isinstance(tool_call.function.name, str)
-                    result = await session.call_tool(tool_call.function.name, arguments=arguments)
-                    logger.debug(f"Result: {result}")
-                    result_str = "\n\n".join(content.text for content in result.content if content.type == "text")
-                    output.append(
-                        Message(
-                            role="tool",  # type: ignore
-                            content=result_str,
-                            tool_call_id=tool_call.id,
-                        )
-                    )
-                return output
-
-
-class FastMCPToolkit(Toolkit):
-
     def __init__(self, client: FastMCPClient):
         self.client = client
         self._initialized = False
         self._lock = asyncio.Lock()
         self._tools: list[ChatCompletionToolParam] = []
+
+    @classmethod
+    def from_config(cls, command: str, args: list[str] = [], env: dict[str, str] = {}):
+        return cls(FastMCPClient({"mcpServers": {"": {"command": command, "args": args, "env": env}}}))
 
     async def _initialize(self):
         async with self._lock:
