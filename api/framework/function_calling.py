@@ -6,6 +6,7 @@ from inspect import Parameter, getdoc, signature
 from typing import Callable, get_type_hints
 
 import docstring_parser
+from fastmcp import Client as FastMCPClient
 from litellm import ChatCompletionMessageToolCall, Message
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
@@ -174,6 +175,67 @@ class MCPToolkit(Toolkit):
                         )
                     )
                 return output
+
+
+class FastMCPToolkit(Toolkit):
+
+    def __init__(self, client: FastMCPClient):
+        self.client = client
+        self._initialized = False
+        self._lock = asyncio.Lock()
+        self._tools: list[ChatCompletionToolParam] = []
+
+    async def _initialize(self):
+        async with self._lock:
+            if not self._initialized:
+                await self.client._connect()
+                await self._get_tools()
+                self._initialized = True
+
+    async def _get_tools(self):
+        tools = await self.client.list_tools()
+        logger.info(f"Got {len(tools)} tools.")
+        for tool in tools:
+            schema = dict(tool.inputSchema)
+            schema["required"] = list(schema["properties"].keys())
+            schema["additionalProperties"] = False
+            param = ChatCompletionToolParam(
+                type="function",
+                function=FunctionDefinition(
+                    name=tool.name,
+                    description=tool.description or "",
+                    parameters=schema,
+                    strict=True,
+                ),
+            )
+            self._tools.append(param)
+            logger.info(f"Added tool from MCP server: {tool.name}")
+
+    async def get_tools(self) -> list[ChatCompletionToolParam]:
+        await self._initialize()
+        return self._tools
+
+    async def handle_tool_calls(self, tool_calls: list[ChatCompletionMessageToolCall]) -> list[Message]:
+        await self._initialize()
+        output = []
+        for tool_call in tool_calls:
+            if (tool_call.function.name or "") not in (tool["function"]["name"] for tool in self._tools):
+                continue
+            logger.info(f"Executing tool call: {tool_call}")
+            arguments = json.loads(tool_call.function.arguments)
+            assert isinstance(arguments, dict)
+            assert isinstance(tool_call.function.name, str)
+            result = await self.client.call_tool(tool_call.function.name, arguments=arguments)
+            logger.debug(f"Result: {result}")
+            result_str = "\n\n".join(content.text for content in result if content.type == "text")
+            output.append(
+                Message(
+                    role="tool",  # type: ignore
+                    content=result_str,
+                    tool_call_id=tool_call.id,
+                )
+            )
+        return output
 
 
 class AssistantToolkit(Toolkit):

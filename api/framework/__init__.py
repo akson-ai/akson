@@ -3,10 +3,11 @@ framework package contains utilities for building assistants.
 """
 
 from .agent import Agent
+from .function_calling import MCPToolkit  # TODO: delete
 from .function_calling import (
     AssistantToolkit,
+    FastMCPToolkit,
     FunctionToolkit,
-    MCPToolkit,
     MultiToolkit,
     Toolkit,
 )
@@ -18,4 +19,5 @@ __all__ = [
     "FunctionToolkit",
     "AssistantToolkit",
     "MCPToolkit",
+    "FastMCPToolkit",
 ]

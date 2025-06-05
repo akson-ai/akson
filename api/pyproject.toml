@@ -23,6 +23,7 @@ dependencies = [
     "litellm>=1.69.0",
     "uvicorn>=0.34.0",
     "langfuse>=2.60.5",
+    "fastmcp>=2.6.1",
 ]
 
 [dependency-groups]

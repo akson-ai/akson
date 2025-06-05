@@ -1,5 +1,13 @@
+from fastmcp import Client as FastMCPClient
+
 from akson import Chat, Message
-from framework import Agent, AssistantToolkit, FunctionToolkit, MCPToolkit, MultiToolkit
+from framework import (
+    Agent,
+    AssistantToolkit,
+    FastMCPToolkit,
+    FunctionToolkit,
+    MultiToolkit,
+)
 
 system_prompt = f"""
     You are Waffle, a personal AI assistant.
@@ -39,11 +47,32 @@ async def find_movie(name: str) -> str:
 
 assistant = Agent(
     name="Waffle",
+    model="claude-sonnet-4-20250514",
     system_prompt=system_prompt,
     toolkit=MultiToolkit(
         [
             FunctionToolkit([find_movie]),
-            MCPToolkit(command="npx", args=["-y", "@modelcontextprotocol/server-sequential-thinking"]),
+            FastMCPToolkit(
+                FastMCPClient(
+                    {
+                        "mcpServers": {
+                            "fetch": {"command": "uvx", "args": ["mcp-server-fetch"]},
+                        }
+                    }
+                )
+            ),
+            FastMCPToolkit(
+                FastMCPClient(
+                    {
+                        "mcpServers": {
+                            "sequential-thinking": {
+                                "command": "npx",
+                                "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"],
+                            }
+                        }
+                    }
+                )
+            ),
             AssistantToolkit(["WebSearch", "Gmail"]),
         ],
     ),
