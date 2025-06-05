@@ -127,9 +127,17 @@ async def send_message(
     except Exception as e:
         logger.error(f"Error handling message: {e}")
         traceback.print_exc()
-        reply = await chat.reply("assistant", name="Error")
-        await reply.add_chunk(f"```{e.__class__.__name__}: {e}```")
+
+        content = f"{e.__class__.__name__}: {e}"
+        if isinstance(e, AssertionError):
+            tb = e.__traceback__
+            extracted_tb = traceback.extract_tb(tb)
+            filename, lineno, func, text = extracted_tb[-1]  # The last call is usually your code line
+            content = f"Assertion failed at `{filename}:{lineno}` in `{func}`:\n```py\n{text}\n```"
+
         # TODO add category "error"
+        reply = await chat.reply("assistant", name="Error")
+        await reply.add_chunk(content)
         await reply.end()
     finally:
         chat.state.save_to_disk()
