@@ -1,5 +1,5 @@
 from akson import Chat, Message
-from framework import Agent, AssistantToolkit, FunctionToolkit, MultiToolkit
+from framework import Agent, AssistantToolkit, FunctionToolkit, MCPToolkit, MultiToolkit
 
 system_prompt = f"""
     You are Waffle, a personal AI assistant.
@@ -43,6 +43,7 @@ assistant = Agent(
     toolkit=MultiToolkit(
         [
             FunctionToolkit([find_movie]),
+            MCPToolkit(command="npx", args=["-y", "@modelcontextprotocol/server-sequential-thinking"]),
             AssistantToolkit(["WebSearch", "Gmail"]),
         ],
     ),
