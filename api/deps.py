@@ -1,6 +1,7 @@
 import os
 
-from fastapi import Depends
+from fastapi import Depends, Request
+from starlette.requests import ClientDisconnect
 
 import models
 from akson import Assistant, Chat, ChatState
@@ -31,8 +32,13 @@ def get_chat_state(chat_id: str) -> ChatState:
         return ChatState.create_new(chat_id, _get_default_assistant().name)
 
 
-def get_chat(chat_id: str) -> Chat:
-    return Chat(state=get_chat_state(chat_id), publisher=pubsub.get_publisher(chat_id))
+def get_chat(chat_id: str, request: Request) -> Chat:
+    async def publish(message):
+        if await request.is_disconnected():
+            raise ClientDisconnect
+        return await pubsub.publish(chat_id, message)
+
+    return Chat(state=get_chat_state(chat_id), publisher=publish)
 
 
 def get_assistant(message: models.SendMessageRequest, chat: Chat = Depends(get_chat)) -> Assistant:
