@@ -217,8 +217,9 @@ class AssistantToolkit(Toolkit):
                 continue
             logger.info(f"Executing tool call: {tool_call}")
             arguments = json.loads(tool_call.function.arguments)
-            assistant = registry.get_assistant(arguments["recipient"])
-            assistant_messages = await Runner(assistant).run(arguments["message"])
+            assistant = registry.get_assistant(arguments["assistant"])
+            message = f"Complete the task: {arguments['task']}"
+            assistant_messages = await Runner(assistant).run(message)
             result = "\n\n".join([message.content for message in assistant_messages])
             logger.debug(f"Result: {result}")
             ret.append(
