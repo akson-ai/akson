@@ -124,6 +124,7 @@ async def send_message(
         return assistant_messages
     except ClientDisconnect:
         logger.info("Client disconnected")
+        return []
     except Exception as e:
         logger.error(f"Error handling message: {e}")
         traceback.print_exc()
@@ -139,6 +140,7 @@ async def send_message(
         reply = await chat.reply("assistant", name="Error")
         await reply.add_chunk(content)
         await reply.end()
+        raise
     finally:
         chat.state.save_to_disk()
 
