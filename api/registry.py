@@ -17,7 +17,7 @@ class Registry:
 
     def _load_assistants(self):
         assistants = {}
-        for assistant in load_objects(Assistant, "assistants"):
+        for assistant in load_objects(Assistant, "assistants", level=1):
             key = assistant.name.lower()
             if key in assistants:
                 raise Exception(f"Duplicate assistant found for {assistant.name}")

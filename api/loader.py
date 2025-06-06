@@ -1,26 +1,24 @@
-import importlib
-import os
+from importlib import import_module
+from pathlib import Path
 from typing import Iterator
 
 from logger import logger
 
 
 def load_objects[T](ObjectType: type[T], dirname: str, level: int = 0) -> Iterator[T]:
-    objects_dir = os.path.join(os.path.dirname(__file__), dirname)
-    logger.info("Loading %s objects from directory: %s", ObjectType.__name__, objects_dir)
-    for object_file in os.listdir(objects_dir):
-        if level > 0:
-            sub_dir = os.path.join(dirname, object_file)
-            yield from load_objects(ObjectType, sub_dir, level - 1)
-        object_file = os.path.basename(object_file)
-        module_name, extension = os.path.splitext(object_file)
-        if extension != ".py":
+    logger.info("Loading %s objects from directory: %s", ObjectType.__name__, dirname)
+    for file_path in Path(dirname).iterdir():
+        if file_path.name == "__pycache__":
             continue
-        logger.debug("Loading file: %s", object_file)
-        module_path = f"{dirname}.{module_name}"
-        module = importlib.import_module(module_path)
+        if file_path.is_dir() and level > 0:
+            yield from load_objects(ObjectType, str(file_path), level - 1)
+            continue
+        if not file_path.suffix == ".py":
+            continue
+        module_path = ".".join(file_path.with_suffix("").parts)
+        logger.info("Importing module: %s", module_path)
+        module = import_module(module_path)
         for key, value in vars(module).items():
-            if not isinstance(value, ObjectType):
-                continue
-            logger.info("Loaded object: %s", key)
-            yield value
+            if isinstance(value, ObjectType):
+                logger.debug("Loaded object: %s", key)
+                yield value
