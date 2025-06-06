@@ -138,7 +138,7 @@ class Chat:
         self.state = state
         """Holds the chat's persistent state loaded from disk."""
 
-        # Contains new messages generated during the agent run.
+        # Contains new messages generated during the assistant run.
         self.new_messages: list[Message] = []
 
         # Publishes messages to clients.

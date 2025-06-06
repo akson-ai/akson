@@ -1,10 +1,10 @@
 import asyncio
 
-from .agent import Agent
 from .function_calling import FunctionToolkit
+from .llm_assistant import LLMAssistant
 
 
-def test_class_agent():
+def test_class_llm_assistant():
     system_prompt = """
         You are a mathematician.
         You are good at math.
@@ -24,7 +24,7 @@ def test_class_agent():
         """
         return a + b
 
-    mathematician = Agent(
+    mathematician = LLMAssistant(
         name="Mathematician",
         system_prompt=system_prompt,
         toolkit=FunctionToolkit([add_two_numbers]),

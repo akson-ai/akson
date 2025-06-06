@@ -3,7 +3,7 @@
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/akson-ai/akson)
 
 Akson is an open-source platform for building and running AI assistants.
-The system combines an API, web interface, and command-line tool to build and manage AI-driven agents.
+The system combines an API, web interface, and command-line tool to build and manage AI-driven assistants.
 The platform is modular and extensible, enabling customization and rapid iteration.
 
 > ⚠️ **Early Development Notice**
@@ -159,12 +159,11 @@ An Assistant is a Python file in the [`api/assistants`](./api/assistants) folder
 Each assistant implements the `def run(chat: Chat) -> None` interface, which defines how the assistant processes and responds to messages.
 You can write a custom assistant by implementing this interface, giving you control over the conversation flow and allowing you to send control messages to the frontend application.
 
-### Agent
-An Agent is a class that implements Assistant's `run` method.
-It's the implementation of an assistant's behavior.
-Agents live in the [`api/assistants`](./api/assistants) folder.
-The Agent class provides an abstraction for creating assistants by specifying:
-- Agent name
+### LLMAssistant
+An LLMAssistant is a class that implements Assistant's `run` method.
+It uses LiteLLM for LLM integration and provides a wrapper around the LLM to make it easier to use in assistants.
+The LLMAssistant class provides an abstraction for creating assistants by specifying:
+- Assistant name
 - Instructions
 - Tools
 
@@ -206,7 +205,7 @@ Here's how you can contribute:
 - Join [GitHub discussions](https://github.com/akson-ai/akson/discussions) to:
   - Share ideas for potential use cases
   - Provide feedback on the current architecture and design
-  - Discuss potential agent ideas
+  - Discuss potential assistant ideas
   - Engage with the community
 
 ## License

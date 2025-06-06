@@ -1,6 +1,6 @@
-from framework import Agent
+from framework import LLMAssistant
 
-chatgpt = Agent(
+chatgpt = LLMAssistant(
     name="ChatGPT",
     model="gpt-4.1",
 )

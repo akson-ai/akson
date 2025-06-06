@@ -2,7 +2,6 @@
 framework package contains utilities for building assistants.
 """
 
-from .agent import Agent
 from .function_calling import (
     AssistantToolkit,
     FunctionToolkit,
@@ -10,9 +9,10 @@ from .function_calling import (
     MultiToolkit,
     Toolkit,
 )
+from .llm_assistant import LLMAssistant
 
 __all__ = [
-    "Agent",
+    "LLMAssistant",
     "Toolkit",
     "MultiToolkit",
     "FunctionToolkit",

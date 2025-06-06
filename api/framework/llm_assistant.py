@@ -28,7 +28,7 @@ if os.getenv("LANGFUSE_PUBLIC_KEY") and os.getenv("LANGFUSE_SECRET_KEY"):
     litellm.failure_callback = ["langfuse"]
 
 
-class Agent(Assistant):
+class LLMAssistant(Assistant):
     """Provides an Assistant implementation with a given system prompt and toolkit."""
 
     def __init__(
@@ -42,7 +42,7 @@ class Agent(Assistant):
         max_turns: int = 10,
     ):
         """
-        Creates a new Agent.
+        Creates a new LLMAssistant.
         """
         self.name = name
         self.description = description
