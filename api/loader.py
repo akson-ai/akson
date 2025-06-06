@@ -5,10 +5,13 @@ from typing import Iterator
 from logger import logger
 
 
-def load_objects[T](ObjectType: type[T], dirname: str) -> Iterator[T]:
+def load_objects[T](ObjectType: type[T], dirname: str, level: int = 0) -> Iterator[T]:
     objects_dir = os.path.join(os.path.dirname(__file__), dirname)
     logger.info("Loading %s objects from directory: %s", ObjectType.__name__, objects_dir)
     for object_file in os.listdir(objects_dir):
+        if level > 0:
+            sub_dir = os.path.join(dirname, object_file)
+            yield from load_objects(ObjectType, sub_dir, level - 1)
         object_file = os.path.basename(object_file)
         module_name, extension = os.path.splitext(object_file)
         if extension != ".py":
