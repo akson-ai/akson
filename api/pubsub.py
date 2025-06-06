@@ -1,3 +1,8 @@
+"""This module contains the PubSub class for publishing and subscribing to topics.
+In the FastAPI app, it is used for sending chat events to clients.
+Topic corresponds to a chat ID.
+"""
+
 import asyncio
 import contextlib
 import uuid

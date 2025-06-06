@@ -1,5 +1,5 @@
 """
-akson package contains the interface that needs to be implemented by assistants.
+akson package contains the Assistant interface that needs to be implemented by assistants.
 """
 
 import os

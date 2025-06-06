@@ -1,3 +1,7 @@
+"""
+This module contains the Runner class, which is responsible for running an assistant on a chat.
+"""
+
 from langfuse.decorators import langfuse_context, observe
 
 from akson import Assistant, Chat, Message

@@ -1,3 +1,5 @@
+"""This module contains the background tasks used by the FastAPI app."""
+
 from pydantic import BaseModel
 
 from akson import Assistant, Chat, ChatState

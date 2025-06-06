@@ -1,3 +1,7 @@
+"""
+This module contains the dynamic object loader mechanism for loading assistants.
+"""
+
 from importlib import import_module
 from pathlib import Path
 from typing import Iterator

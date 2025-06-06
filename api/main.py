@@ -1,3 +1,5 @@
+"""This module contains the FastAPI app."""
+
 import json
 import os
 import traceback

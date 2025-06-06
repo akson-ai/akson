@@ -1,3 +1,8 @@
+"""
+This module contains the centralized registry for assistants.
+Each assistant loaded from the `assistants` directory is registered here.
+"""
+
 from collections import OrderedDict
 
 from akson import Assistant

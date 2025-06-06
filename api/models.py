@@ -1,3 +1,5 @@
+"""This module contains the Pydantic models for the API."""
+
 import uuid
 from datetime import datetime
 from typing import Optional

@@ -1,3 +1,7 @@
+"""
+This module contains the dependencies for the FastAPI app.
+"""
+
 import os
 
 from fastapi import Depends, Request
