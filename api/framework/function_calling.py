@@ -1,5 +1,6 @@
 import asyncio
 import json
+import os
 from abc import ABC, abstractmethod
 from enum import StrEnum
 from inspect import Parameter, getdoc, signature
@@ -135,6 +136,11 @@ class MCPToolkit(Toolkit):
     def from_config(cls, command: str, args: list[str] = [], env: dict[str, str] = {}):
         return cls(FastMCPClient({"mcpServers": {"": {"command": command, "args": args, "env": env}}}))
 
+    @classmethod
+    def from_node_package(cls, package: str, **kargs):
+        cmd = node_package(package, **kargs)
+        return cls(FastMCPClient({"mcpServers": {"": {"command": cmd[0], "args": cmd[1:]}}}))
+
     async def _initialize(self):
         async with self._lock:
             if not self._initialized:
@@ -228,3 +234,36 @@ class AssistantToolkit(Toolkit):
                 )
             )
         return ret
+
+
+def docker_command(
+    image: str,
+    *,
+    name: str | None = None,
+    args: list[str] = [],
+    env: list[tuple[str, str]] = [],
+    entrypoint: str | None = None,
+    mounts: list[tuple[str, str]] = [],
+    volumes: list[tuple[str, str]] = [],
+):
+    cmd = ["docker", "run", "-i", "--rm"]
+    if name:
+        cmd.extend(["--name", f"akson-{name}"])
+    if entrypoint:
+        cmd.extend(["--entrypoint", entrypoint])
+    for mount in mounts:
+        cmd.extend(["--mount", f"type=bind,source={mount[0]},target={mount[1]}"])
+    for volume in volumes:
+        cmd.extend(["-v", f"{volume[0]}:{volume[1]}"])
+    for env_var in env:
+        cmd.extend(["-e", f"{env_var[0]}={env_var[1]}"])
+    cmd.append(image)
+    cmd.extend(args)
+    return cmd
+
+
+def node_package(package: str, **kwargs):
+    NPM_CACHE_DIR = os.environ["NPM_CACHE_DIR"]
+    kwargs["args"] = ["exec", package] + kwargs["args"]
+    kwargs["mounts"] = kwargs.get("mounts", []) + [(NPM_CACHE_DIR, "/root/.npm")]
+    return docker_command("node:24", name=package, entrypoint="/usr/local/bin/npm", **kwargs)
