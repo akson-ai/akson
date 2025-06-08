@@ -201,7 +201,6 @@ class AssistantToolkit(Toolkit):
     def __init__(self, assistants: list[str]):
         self.assitants = assistants
 
-    async def get_tools(self) -> list[ChatCompletionToolParam]:
         assistant_enum = StrEnum("Assistant", self.assitants)
 
         class DelegateTask(BaseModel):
@@ -212,7 +211,11 @@ class AssistantToolkit(Toolkit):
             assistant: assistant_enum
             task: str
 
-        return [pydantic_function_tool(DelegateTask, name=self.TOOL_NAME)]
+        self._model = DelegateTask
+        self._tools = [pydantic_function_tool(self._model, name=self.TOOL_NAME)]
+
+    async def get_tools(self) -> list[ChatCompletionToolParam]:
+        return self._tools
 
     async def handle_tool_calls(self, tool_calls: list[ChatCompletionMessageToolCall]) -> list[Message]:
         from deps import registry
@@ -222,9 +225,9 @@ class AssistantToolkit(Toolkit):
             if tool_call.function.name != self.TOOL_NAME:
                 continue
             logger.info(f"Executing tool call: {tool_call}")
-            arguments = json.loads(tool_call.function.arguments)
-            assistant = registry.get_assistant(arguments["assistant"])
-            task_response = await Runner(assistant).complete_task(arguments["task"])
+            instance = self._model.model_validate_json(tool_call.function.arguments)
+            assistant = registry.get_assistant(instance.assistant)
+            task_response = await Runner(assistant).complete_task(instance.task)
             logger.debug(f"Task response: {task_response}")
             ret.append(
                 Message(
