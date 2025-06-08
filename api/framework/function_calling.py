@@ -218,14 +218,12 @@ class AssistantToolkit(Toolkit):
             logger.info(f"Executing tool call: {tool_call}")
             arguments = json.loads(tool_call.function.arguments)
             assistant = registry.get_assistant(arguments["assistant"])
-            message = f"Complete the task: {arguments['task']}"
-            assistant_messages = await Runner(assistant).run(message)
-            result = "\n\n".join([message.content for message in assistant_messages])
-            logger.debug(f"Result: {result}")
+            task_response = await Runner(assistant).complete_task(arguments["task"])
+            logger.debug(f"Task response: {task_response}")
             ret.append(
                 Message(
                     role="tool",  # type: ignore
-                    content=result,
+                    content=task_response.model_dump_json(),
                     tool_call_id=tool_call.id,
                 )
             )
