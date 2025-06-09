@@ -140,7 +140,8 @@ class MCPToolkit(Toolkit):
     @classmethod
     def from_node_package(cls, package: str, **kargs):
         cmd = node_package(package, **kargs)
-        return cls(FastMCPClient({"mcpServers": {"": {"command": cmd[0], "args": cmd[1:]}}}))
+        env = dict(kargs.get("env", []))
+        return cls(FastMCPClient({"mcpServers": {"": {"command": cmd[0], "args": cmd[1:], "env": env}}}))
 
     async def _initialize(self):
         async with self._lock:
