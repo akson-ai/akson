@@ -280,7 +280,7 @@ class AssistantToolkit(Toolkit):
         # Run the assistant on the task's chat session
         assistant = registry.get_assistant(tool_call.assistant)
         chat.state.assistant = assistant.name
-        chat.state.messages.append(Message(role="user", content=tool_call.task))
+        chat.state.messages.append(Message(role="user", name="TODO", content=tool_call.task))
         await assistant.run(chat)
 
         task_analyzer = LLMAssistant(
