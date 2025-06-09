@@ -3,7 +3,7 @@ import { API_BASE_URL } from "../constants";
 
 export function useEvents(chatId, setMessages, setSelectedAssistant) {
   useEffect(() => {
-    const eventSource = new EventSource(`${API_BASE_URL}/${chatId}/events`, {
+    const eventSource = new EventSource(`${API_BASE_URL}/chats/${chatId}/events`, {
       withCredentials: true,
     });
 

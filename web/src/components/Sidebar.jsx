@@ -11,7 +11,7 @@ function Sidebar({ chatId }) {
 
   const deleteChatMutation = useMutation({
     mutationFn: async (id) => {
-      await fetch(`${API_BASE_URL}/${id}`, {
+      await fetch(`${API_BASE_URL}/chats/${id}`, {
         method: "DELETE",
         credentials: "include",
       });

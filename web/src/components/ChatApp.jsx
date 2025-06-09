@@ -13,7 +13,7 @@ function ChatApp({ chatId }) {
   const [inputText, setInputText] = useState("");
   const [selectedAssistant, setSelectedAssistant] = useState(undefined);
   const messageInputRef = useRef(null);
-  const { data: state } = useSuspenseQuery({ queryKey: [chatId, "state"] });
+  const { data: state } = useSuspenseQuery({ queryKey: ["chats", chatId] });
 
   useEffect(() => {
     document.title = state.title || "New Chat";
@@ -33,7 +33,7 @@ function ChatApp({ chatId }) {
 
   const sendMessageMutation = useMutation({
     mutationFn: async (message) => {
-      await fetch(`${API_BASE_URL}/${chatId}/message`, {
+      await fetch(`${API_BASE_URL}/chats/${chatId}/messages`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -45,7 +45,7 @@ function ChatApp({ chatId }) {
 
   const deleteMessageMutation = useMutation({
     mutationFn: async (messageId) => {
-      await fetch(`${API_BASE_URL}/${chatId}/message/${messageId}`, {
+      await fetch(`${API_BASE_URL}/chats/${chatId}/messages/${messageId}`, {
         method: "DELETE",
         credentials: "include",
       });

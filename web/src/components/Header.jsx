@@ -7,7 +7,7 @@ function Header({ chatId, selectedAssistant, onAssistantChange, createNewChat })
   const { data: assistants } = useSuspenseQuery({ queryKey: ["assistants"] });
   const updateAssistantMutation = useMutation({
     mutationFn: async (assistant) => {
-      await fetch(`${API_BASE_URL}/${chatId}/assistant`, {
+      await fetch(`${API_BASE_URL}/chats/${chatId}/assistant`, {
         method: "PUT",
         credentials: "include",
         body: assistant,

@@ -92,20 +92,20 @@ async def get_chats():
     return chat_files
 
 
-@app.get("/{chat_id}/state", response_model=ChatState)
+@app.get("/chats/{chat_id}", response_model=ChatState)
 async def get_chat_state_endpoint(state: ChatState = Depends(deps.get_chat_state)):
     """Return the state of a chat session."""
     return state
 
 
-@app.put("/{chat_id}/assistant")
+@app.put("/chats/{chat_id}/assistant")
 async def set_assistant(assistant: str = Body(...), state: ChatState = Depends(deps.get_chat_state)):
     """Update the assistant for a chat session."""
     state.assistant = assistant
     state.save_to_disk()
 
 
-@app.post("/{chat_id}/message", response_model=list[Message])
+@app.post("/chats/{chat_id}/messages", response_model=list[Message])
 async def send_message(
     message: models.SendMessageRequest,
     background_tasks: BackgroundTasks,
@@ -166,7 +166,7 @@ async def handle_command(chat: Chat, content: str):
             raise Exception("Unknown command")
 
 
-@app.delete("/{chat_id}/message/{message_id}")
+@app.delete("/chats/{chat_id}/messages/{message_id}")
 async def delete_message(
     message_id: str,
     state: ChatState = Depends(deps.get_chat_state),
@@ -176,7 +176,7 @@ async def delete_message(
     state.save_to_disk()
 
 
-@app.delete("/{chat_id}")
+@app.delete("/chats/{chat_id}")
 async def delete_chat(chat_id: str):
     """Delete a chat by its ID."""
     file_path = ChatState.file_path(chat_id)
@@ -184,7 +184,7 @@ async def delete_chat(chat_id: str):
         os.remove(file_path)
 
 
-@app.get("/{chat_id}/events")
+@app.get("/chats/{chat_id}/events")
 async def get_events(chat_id: str, pubsub: PubSub = Depends(deps.get_pubsub)):
     """Stream events to the client over SSE."""
 
