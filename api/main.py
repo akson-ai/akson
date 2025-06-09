@@ -27,7 +27,7 @@ from pubsub import PubSub
 from registry import UnknownAssistant
 from runner import Runner
 
-app = FastAPI()
+app = FastAPI(title="Akson API", version="0.1.0")
 
 app.add_middleware(
     CORSMiddleware,
