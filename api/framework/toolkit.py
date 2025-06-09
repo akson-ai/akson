@@ -2,6 +2,7 @@ import asyncio
 import json
 import os
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from enum import StrEnum
 from inspect import Parameter, getdoc, signature
 from typing import Callable, get_type_hints
@@ -19,6 +20,11 @@ from akson import Chat, ChatState, Message
 from logger import logger
 
 
+@dataclass
+class ToolContext:
+    caller: str
+
+
 class Toolkit(ABC):
     """Manages the list of tools to be passed into completion reqeust."""
 
@@ -26,7 +32,9 @@ class Toolkit(ABC):
     async def get_tools(self) -> list[ChatCompletionToolParam]: ...
 
     @abstractmethod
-    async def handle_tool_calls(self, tool_calls: list[ChatCompletionMessageToolCall]) -> list[LiteLLMMessage]: ...
+    async def handle_tool_calls(
+        self, tool_calls: list[ChatCompletionMessageToolCall], context: ToolContext
+    ) -> list[LiteLLMMessage]: ...
 
 
 class MultiToolkit(Toolkit):
@@ -41,10 +49,12 @@ class MultiToolkit(Toolkit):
             tools.extend(await toolkit.get_tools())
         return tools
 
-    async def handle_tool_calls(self, tool_calls: list[ChatCompletionMessageToolCall]) -> list[LiteLLMMessage]:
+    async def handle_tool_calls(
+        self, tool_calls: list[ChatCompletionMessageToolCall], context: ToolContext
+    ) -> list[LiteLLMMessage]:
         messages = []
         for toolkit in self.toolkits:
-            messages.extend(await toolkit.handle_tool_calls(tool_calls))
+            messages.extend(await toolkit.handle_tool_calls(tool_calls, context))
         return messages
 
 
@@ -60,7 +70,9 @@ class FunctionToolkit(Toolkit):
         """Returns the list of tools to be passed into completion reqeust."""
         return self.tools
 
-    async def handle_tool_calls(self, tool_calls: list[ChatCompletionMessageToolCall]) -> list[LiteLLMMessage]:
+    async def handle_tool_calls(
+        self, tool_calls: list[ChatCompletionMessageToolCall], context: ToolContext
+    ) -> list[LiteLLMMessage]:
         """This is called each time a response is received from completion method."""
         logger.info("Number of tool calls: %s", len(tool_calls))
         messages = []
@@ -179,7 +191,9 @@ class MCPToolkit(Toolkit):
         await self._initialize()
         return self._tools
 
-    async def handle_tool_calls(self, tool_calls: list[ChatCompletionMessageToolCall]) -> list[LiteLLMMessage]:
+    async def handle_tool_calls(
+        self, tool_calls: list[ChatCompletionMessageToolCall], context: ToolContext
+    ) -> list[LiteLLMMessage]:
         await self._initialize()
         output = []
         for tool_call in tool_calls:
@@ -250,14 +264,16 @@ class AssistantToolkit(Toolkit):
     async def get_tools(self) -> list[ChatCompletionToolParam]:
         return self._tools
 
-    async def handle_tool_calls(self, tool_calls: list[ChatCompletionMessageToolCall]) -> list[LiteLLMMessage]:
+    async def handle_tool_calls(
+        self, tool_calls: list[ChatCompletionMessageToolCall], context: ToolContext
+    ) -> list[LiteLLMMessage]:
         ret = []
         for tool_call in tool_calls:
             if tool_call.function.name != self.TOOL_NAME:
                 continue
             logger.info(f"Executing tool call: {tool_call}")
             instance = self._model.model_validate_json(tool_call.function.arguments)
-            task_response = await self._complete_task(instance)
+            task_response = await self._complete_task(instance, context.caller)
             logger.debug(f"Task response: {task_response}")
             ret.append(
                 LiteLLMMessage(
@@ -268,7 +284,7 @@ class AssistantToolkit(Toolkit):
             )
         return ret
 
-    async def _complete_task(self, tool_call) -> TaskResponse:
+    async def _complete_task(self, tool_call, assistant_name: str) -> TaskResponse:
         from deps import registry
         from framework import LLMAssistant
 
@@ -280,7 +296,7 @@ class AssistantToolkit(Toolkit):
         # Run the assistant on the task's chat session
         assistant = registry.get_assistant(tool_call.assistant)
         chat.state.assistant = assistant.name
-        chat.state.messages.append(Message(role="user", name="TODO", content=tool_call.task))
+        chat.state.messages.append(Message(role="user", name=assistant_name, content=tool_call.task))
         await assistant.run(chat)
 
         task_analyzer = LLMAssistant(

@@ -18,7 +18,7 @@ from akson import Assistant, Chat, Message, ToolCall
 from logger import logger
 
 from .streaming import MessageBuilder
-from .toolkit import Toolkit
+from .toolkit import ToolContext, Toolkit
 
 DEFAULT_MODEL = os.environ["DEFAULT_MODEL"]
 
@@ -62,7 +62,7 @@ class LLMAssistant(Assistant):
         async def handle_tool_calls(message: LitellmMessage):
             assert self.toolkit
             assert message.tool_calls
-            tool_messages = await self.toolkit.handle_tool_calls(message.tool_calls)
+            tool_messages = await self.toolkit.handle_tool_calls(message.tool_calls, ToolContext(caller=self.name))
             assert len(tool_messages) == len(message.tool_calls)
             for tool_message in tool_messages:
                 messages.append(tool_message)
