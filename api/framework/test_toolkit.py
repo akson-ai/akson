@@ -2,7 +2,7 @@ import pytest
 from litellm import ChatCompletionMessageToolCall
 from litellm.types.utils import Function
 
-from .function_calling import FunctionToolkit
+from .toolkit import FunctionToolkit
 
 
 async def _test_function(f, args: str):

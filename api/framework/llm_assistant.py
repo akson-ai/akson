@@ -17,8 +17,8 @@ from pydantic import BaseModel
 from akson import Assistant, Chat, Message, ToolCall
 from logger import logger
 
-from .function_calling import Toolkit
 from .streaming import MessageBuilder
+from .toolkit import Toolkit
 
 DEFAULT_MODEL = os.environ["DEFAULT_MODEL"]
 

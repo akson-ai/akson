@@ -2,14 +2,14 @@
 framework package contains utilities for building assistants.
 """
 
-from .function_calling import (
+from .llm_assistant import LLMAssistant
+from .toolkit import (
     AssistantToolkit,
     FunctionToolkit,
     MCPToolkit,
     MultiToolkit,
     Toolkit,
 )
-from .llm_assistant import LLMAssistant
 
 __all__ = [
     "LLMAssistant",
