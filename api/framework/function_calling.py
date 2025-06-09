@@ -8,14 +8,15 @@ from typing import Callable, get_type_hints
 
 import docstring_parser
 from fastmcp import Client as FastMCPClient
-from litellm import ChatCompletionMessageToolCall, Message
+from litellm import ChatCompletionMessageToolCall
+from litellm import Message as LiteLLMMessage
 from openai import pydantic_function_tool
 from openai.types.chat import ChatCompletionToolParam
 from openai.types.shared_params import FunctionDefinition
 from pydantic import BaseModel, Field, create_model
 
+from akson import Chat, ChatState, Message
 from logger import logger
-from runner import Runner
 
 
 class Toolkit(ABC):
@@ -25,7 +26,7 @@ class Toolkit(ABC):
     async def get_tools(self) -> list[ChatCompletionToolParam]: ...
 
     @abstractmethod
-    async def handle_tool_calls(self, tool_calls: list[ChatCompletionMessageToolCall]) -> list[Message]: ...
+    async def handle_tool_calls(self, tool_calls: list[ChatCompletionMessageToolCall]) -> list[LiteLLMMessage]: ...
 
 
 class MultiToolkit(Toolkit):
@@ -40,7 +41,7 @@ class MultiToolkit(Toolkit):
             tools.extend(await toolkit.get_tools())
         return tools
 
-    async def handle_tool_calls(self, tool_calls: list[ChatCompletionMessageToolCall]) -> list[Message]:
+    async def handle_tool_calls(self, tool_calls: list[ChatCompletionMessageToolCall]) -> list[LiteLLMMessage]:
         messages = []
         for toolkit in self.toolkits:
             messages.extend(await toolkit.handle_tool_calls(tool_calls))
@@ -59,7 +60,7 @@ class FunctionToolkit(Toolkit):
         """Returns the list of tools to be passed into completion reqeust."""
         return self.tools
 
-    async def handle_tool_calls(self, tool_calls: list[ChatCompletionMessageToolCall]) -> list[Message]:
+    async def handle_tool_calls(self, tool_calls: list[ChatCompletionMessageToolCall]) -> list[LiteLLMMessage]:
         """This is called each time a response is received from completion method."""
         logger.info("Number of tool calls: %s", len(tool_calls))
         messages = []
@@ -86,7 +87,7 @@ class FunctionToolkit(Toolkit):
 
             logger.info("%s call result: %s", function.name, result)
             messages.append(
-                Message(
+                LiteLLMMessage(
                     role="tool",  # type: ignore
                     tool_call_id=tool_call.id,
                     content=result if isinstance(result, str) else json.dumps(result),
@@ -171,7 +172,7 @@ class MCPToolkit(Toolkit):
         await self._initialize()
         return self._tools
 
-    async def handle_tool_calls(self, tool_calls: list[ChatCompletionMessageToolCall]) -> list[Message]:
+    async def handle_tool_calls(self, tool_calls: list[ChatCompletionMessageToolCall]) -> list[LiteLLMMessage]:
         await self._initialize()
         output = []
         for tool_call in tool_calls:
@@ -185,13 +186,30 @@ class MCPToolkit(Toolkit):
             logger.debug(f"Result: {result}")
             result_str = "\n\n".join(content.text for content in result if content.type == "text")
             output.append(
-                Message(
+                LiteLLMMessage(
                     role="tool",  # type: ignore
                     content=result_str,
                     tool_call_id=tool_call.id,
                 )
             )
         return output
+
+
+class TaskStatus(StrEnum):
+    WORKING = "WORKING"
+    INPUT_REQUIRED = "INPUT_REQUIRED"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"
+
+
+class TaskAnalysis(BaseModel):
+    status: TaskStatus
+    result: str | None = Field(default=None, description="Result of the task (e.g. the data requested by user)")
+
+
+class TaskResponse(BaseModel):
+    id: str
+    analysis: TaskAnalysis
 
 
 class AssistantToolkit(Toolkit):
@@ -210,6 +228,14 @@ class AssistantToolkit(Toolkit):
 
             assistant: assistant_enum
             task: str
+            id: str | None = Field(
+                default=None,
+                description=(
+                    "ID of the task. Used to track the task."
+                    "Pass null if you want to start a new conversation. The tool will generate a new ID."
+                    "Pass the same ID if you want to continue the conversation."
+                ),
+            )
 
         self._model = DelegateTask
         self._tools = [pydantic_function_tool(self._model, name=self.TOOL_NAME)]
@@ -217,26 +243,58 @@ class AssistantToolkit(Toolkit):
     async def get_tools(self) -> list[ChatCompletionToolParam]:
         return self._tools
 
-    async def handle_tool_calls(self, tool_calls: list[ChatCompletionMessageToolCall]) -> list[Message]:
-        from deps import registry
-
+    async def handle_tool_calls(self, tool_calls: list[ChatCompletionMessageToolCall]) -> list[LiteLLMMessage]:
         ret = []
         for tool_call in tool_calls:
             if tool_call.function.name != self.TOOL_NAME:
                 continue
             logger.info(f"Executing tool call: {tool_call}")
             instance = self._model.model_validate_json(tool_call.function.arguments)
-            assistant = registry.get_assistant(instance.assistant)
-            task_response = await Runner(assistant).complete_task(instance.task)
+            task_response = await self._complete_task(instance)
             logger.debug(f"Task response: {task_response}")
             ret.append(
-                Message(
+                LiteLLMMessage(
                     role="tool",  # type: ignore
                     content=task_response.model_dump_json(),
                     tool_call_id=tool_call.id,
                 )
             )
         return ret
+
+    async def _complete_task(self, tool_call) -> TaskResponse:
+        from deps import registry
+        from framework import LLMAssistant
+
+        if tool_call.id:
+            chat = Chat(state=ChatState.load_from_disk(tool_call.id))
+        else:
+            chat = Chat()
+
+        # Run the assistant on the task's chat session
+        assistant = registry.get_assistant(tool_call.assistant)
+        user_message = Message(role="user", content=tool_call.task)
+        chat.state.messages.append(user_message)
+        await assistant.run(chat)
+
+        task_analyzer = LLMAssistant(
+            name="TaskAnalyzer",
+            model="gpt-4.1-nano",
+            system_prompt="""
+            Analyze the conversation and extract the task details and output.
+            You must extract all details asked from the conversation because the user cannot see this conversation.
+            For example if user is asking for email, you must extract the list of emails and output them.
+            """,
+            output_type=TaskAnalysis,
+        )
+
+        temp = Chat()
+        temp.state.messages = chat.state.messages.copy()
+        await task_analyzer.run(temp)
+
+        analysis = TaskAnalysis.model_validate_json(temp.state.messages[-1].content)
+        chat.state.save_to_disk()
+
+        return TaskResponse(id=chat.state.id, analysis=analysis)
 
 
 def docker_command(
