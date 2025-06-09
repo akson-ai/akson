@@ -304,6 +304,11 @@ class AssistantToolkit(Toolkit):
         return TaskResponse(id=chat.state.id, analysis=analysis)
 
 
+def clean_string(text):
+    """Remove all characters except a-z, A-Z, 0-9, dash, and underscore"""
+    return "".join(char for char in text if char.isalnum() or char in "_-")
+
+
 def docker_command(
     image: str,
     *,
@@ -316,6 +321,7 @@ def docker_command(
 ):
     cmd = ["docker", "run", "-i", "--rm"]
     if name:
+        name = clean_string(name)
         cmd.extend(["--name", f"akson-{name}"])
     if entrypoint:
         cmd.extend(["--entrypoint", entrypoint])
@@ -332,6 +338,6 @@ def docker_command(
 
 def node_package(package: str, **kwargs):
     NPM_CACHE_DIR = os.environ["NPM_CACHE_DIR"]
-    kwargs["args"] = ["exec", package] + kwargs["args"]
+    kwargs["args"] = ["exec", package] + kwargs.get("args", [])
     kwargs["mounts"] = kwargs.get("mounts", []) + [(NPM_CACHE_DIR, "/root/.npm")]
     return docker_command("node:24", name=package, entrypoint="/usr/local/bin/npm", **kwargs)
