@@ -144,7 +144,7 @@ class MCPToolkit(Toolkit):
         return cls(FastMCPClient({"mcpServers": {"": {"command": cmd[0], "args": cmd[1:], "env": env}}}))
 
     @classmethod
-    def from_docker_command(cls, image: str, **kargs):
+    def from_docker_image(cls, image: str, **kargs):
         cmd = docker_command(image, **kargs)
         env = dict(kargs.get("env", []))
         return cls(FastMCPClient({"mcpServers": {"": {"command": cmd[0], "args": cmd[1:], "env": env}}}))
