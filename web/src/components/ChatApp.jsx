@@ -94,6 +94,32 @@ function ChatApp({ chatId }) {
     deleteMessageMutation.mutate(messageId);
   };
 
+  const retryMessageMutation = useMutation({
+    mutationFn: async (messageId) => {
+      await fetch(`${API_BASE_URL}/chats/${chatId}/messages/${messageId}/retry`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        signal: abortControllerRef.current.signal,
+      });
+    },
+  });
+
+  const retryMessage = (messageId) => {
+    if (!confirm("Are you sure you want to retry from this message? This will remove all messages below it.")) {
+      return;
+    }
+
+    // Remove all messages after the selected one locally
+    const messageIndex = messages.findIndex((msg) => msg.id === messageId);
+    if (messageIndex !== -1) {
+      setMessages((prev) => prev.slice(0, messageIndex));
+    }
+
+    abortControllerRef.current = new AbortController();
+    retryMessageMutation.mutate(messageId);
+  };
+
   return (
     <>
       <Header
@@ -104,7 +130,7 @@ function ChatApp({ chatId }) {
       />
 
       <div className="flex flex-col max-w-5xl mx-auto h-[calc(100vh-64px)] w-full">
-        <History messages={messages} onDeleteMessage={deleteMessage} />
+        <History messages={messages} onDeleteMessage={deleteMessage} onRetryMessage={retryMessage} />
         <Input
           inputText={inputText}
           messageInputRef={messageInputRef}

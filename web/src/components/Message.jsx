@@ -3,10 +3,10 @@ import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
-import { FaTrash, FaCopy, FaChevronRight, FaChevronDown } from "react-icons/fa6";
+import { FaTrash, FaCopy, FaChevronRight, FaChevronDown, FaArrowRotateRight } from "react-icons/fa6";
 import { FaTools } from "react-icons/fa";
 
-function Message({ id, role, name, content, toolCall, toolCallId, category, onDelete }) {
+function Message({ id, role, name, content, toolCall, toolCallId, category, onDelete, onRetry }) {
   const [isHovered, setIsHovered] = useState(false);
   const [isToolExpanded, setIsToolExpanded] = useState(false);
   const categoryTag = category ? `chat-bubble-${category}` : "";
@@ -101,26 +101,29 @@ function Message({ id, role, name, content, toolCall, toolCallId, category, onDe
           </div>
         )}
       </div>
-      {(content || toolCall) && (
-        <div className={`chat-footer mt-1 ${isHovered ? "visible" : "invisible"}`}>
-          <>
-            <button
-              className="btn btn-xs btn-ghost btn-square"
-              onClick={() => navigator.clipboard.writeText(content)}
-              title="Copy message"
-            >
-              <FaCopy />
+      <div className={`chat-footer mt-1 ${isHovered ? "visible" : "invisible"}`}>
+        <>
+          <button
+            className="btn btn-xs btn-ghost btn-square"
+            onClick={() => navigator.clipboard.writeText(content)}
+            title="Copy message"
+          >
+            <FaCopy />
+          </button>
+          <button
+            className="btn btn-xs btn-ghost btn-square btn-error"
+            onClick={() => onDelete(id)}
+            title="Delete message"
+          >
+            <FaTrash />
+          </button>
+          {role === "assistant" && (
+            <button className="btn btn-xs btn-ghost btn-square" onClick={() => onRetry(id)} title="Retry from here">
+              <FaArrowRotateRight />
             </button>
-            <button
-              className="btn btn-xs btn-ghost btn-square btn-error"
-              onClick={() => onDelete(id)}
-              title="Delete message"
-            >
-              <FaTrash />
-            </button>
-          </>
-        </div>
-      )}
+          )}
+        </>
+      </div>
     </div>
   );
 }

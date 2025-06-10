@@ -176,6 +176,44 @@ async def delete_message(
     state.save_to_disk()
 
 
+@app.post("/chats/{chat_id}/messages/{message_id}/retry", response_model=list[Message])
+async def retry_message(message_id: str, chat: Chat = Depends(deps.get_chat)):
+    """Retry from a message by removing it and all subsequent messages, then rerun the assistant."""
+    try:
+        try:
+            message_index = [msg.id for msg in chat.state.messages].index(message_id)
+        except ValueError:
+            return JSONResponse(status_code=404, content={"detail": "Message not found"})
+
+        retry_message = chat.state.messages[message_index]
+        assert retry_message.role == "assistant"
+        assert retry_message.name
+        assistant = deps.registry.get_assistant(retry_message.name)
+        chat.state.messages = chat.state.messages[:message_index]
+        assistant_messages = await Runner(assistant, chat).run()
+        return assistant_messages
+    except ClientDisconnect:
+        logger.info("Client disconnected")
+        return []
+    except Exception as e:
+        logger.error(f"Error retrying message: {e}")
+        traceback.print_exc()
+
+        content = f"{e.__class__.__name__}: {e}"
+        if isinstance(e, AssertionError):
+            tb = e.__traceback__
+            extracted_tb = traceback.extract_tb(tb)
+            filename, lineno, func, text = extracted_tb[-1]
+            content = f"Assertion failed at `{filename}:{lineno}` in `{func}`:\n```py\n{text}\n```"
+
+        reply = await chat.reply("assistant", name="Error")
+        await reply.add_chunk(content)
+        await reply.end()
+        raise
+    finally:
+        chat.state.save_to_disk()
+
+
 @app.delete("/chats/{chat_id}")
 async def delete_chat(chat_id: str):
     """Delete a chat by its ID."""
