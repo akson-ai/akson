@@ -128,23 +128,29 @@ async def send_message(
         logger.info("Client disconnected")
         return []
     except Exception as e:
-        logger.error(f"Error handling message: {e}")
-        traceback.print_exc()
-
-        content = f"{e.__class__.__name__}: {e}"
-        if isinstance(e, AssertionError):
-            tb = e.__traceback__
-            extracted_tb = traceback.extract_tb(tb)
-            filename, lineno, func, text = extracted_tb[-1]  # The last call is usually your code line
-            content = f"Assertion failed at `{filename}:{lineno}` in `{func}`:\n```py\n{text}\n```"
-
-        # TODO add category "error"
-        reply = await chat.reply("assistant", name="Error")
-        await reply.add_chunk(content)
-        await reply.end()
+        await _handle_exception(chat, e)
         raise
     finally:
         chat.state.save_to_disk()
+
+
+async def _handle_exception(chat: Chat, e: Exception):
+    logger.error(f"Error handling message: {e}")
+    traceback.print_exc()
+
+    tb = e.__traceback__
+    extracted_tb = traceback.extract_tb(tb)
+    filename, lineno, func, text = extracted_tb[-1]  # The last call is usually your code line
+    if isinstance(e, AssertionError):
+        text = f"```py\n{text}\n```"
+    else:
+        text = f"```\n{e}\n```"
+    content = f"`{e.__class__.__name__} at {filename}:{lineno} in {func}`:\n{text}"
+
+    # TODO add category "error"
+    reply = await chat.reply("assistant", name="Error")
+    await reply.add_chunk(content)
+    await reply.end()
 
 
 async def handle_command(chat: Chat, content: str):
@@ -196,19 +202,7 @@ async def retry_message(message_id: str, chat: Chat = Depends(deps.get_chat)):
         logger.info("Client disconnected")
         return []
     except Exception as e:
-        logger.error(f"Error retrying message: {e}")
-        traceback.print_exc()
-
-        content = f"{e.__class__.__name__}: {e}"
-        if isinstance(e, AssertionError):
-            tb = e.__traceback__
-            extracted_tb = traceback.extract_tb(tb)
-            filename, lineno, func, text = extracted_tb[-1]
-            content = f"Assertion failed at `{filename}:{lineno}` in `{func}`:\n```py\n{text}\n```"
-
-        reply = await chat.reply("assistant", name="Error")
-        await reply.add_chunk(content)
-        await reply.end()
+        await _handle_exception(chat, e)
         raise
     finally:
         chat.state.save_to_disk()
