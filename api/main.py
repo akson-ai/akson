@@ -172,6 +172,23 @@ async def handle_command(chat: Chat, content: str):
             raise Exception("Unknown command")
 
 
+@app.put("/chats/{chat_id}/messages/{message_id}")
+async def edit_message(
+    message_id: str,
+    edit_request: models.EditMessageRequest,
+    state: ChatState = Depends(deps.get_chat_state),
+):
+    """Edit a message by its ID."""
+    for message in state.messages:
+        if message.id == message_id:
+            message.content = edit_request.content
+            break
+    else:
+        return JSONResponse(status_code=404, content={"detail": "Message not found"})
+
+    state.save_to_disk()
+
+
 @app.delete("/chats/{chat_id}/messages/{message_id}")
 async def delete_message(
     message_id: str,

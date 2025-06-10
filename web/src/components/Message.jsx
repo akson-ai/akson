@@ -4,9 +4,9 @@ import remarkGfm from "remark-gfm";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { FaTrash, FaCopy, FaChevronRight, FaChevronDown, FaArrowRotateRight } from "react-icons/fa6";
-import { FaTools } from "react-icons/fa";
+import { FaTools, FaEdit } from "react-icons/fa";
 
-function Message({ id, role, name, content, toolCall, toolCallId, category, onDelete, onRetry }) {
+function Message({ id, role, name, content, toolCall, toolCallId, category, onDelete, onRetry, onEdit }) {
   const [isHovered, setIsHovered] = useState(false);
   const [isToolExpanded, setIsToolExpanded] = useState(false);
   const categoryTag = category ? `chat-bubble-${category}` : "";
@@ -110,6 +110,16 @@ function Message({ id, role, name, content, toolCall, toolCallId, category, onDe
           >
             <FaCopy />
           </button>
+          {role === "user" && (
+            <button className="btn btn-xs btn-ghost btn-square" onClick={() => onEdit(id)} title="Edit message">
+              <FaEdit />
+            </button>
+          )}
+          {role === "assistant" && (
+            <button className="btn btn-xs btn-ghost btn-square" onClick={() => onRetry(id)} title="Retry from here">
+              <FaArrowRotateRight />
+            </button>
+          )}
           <button
             className="btn btn-xs btn-ghost btn-square btn-error"
             onClick={() => onDelete(id)}
@@ -117,11 +127,6 @@ function Message({ id, role, name, content, toolCall, toolCallId, category, onDe
           >
             <FaTrash />
           </button>
-          {role === "assistant" && (
-            <button className="btn btn-xs btn-ghost btn-square" onClick={() => onRetry(id)} title="Retry from here">
-              <FaArrowRotateRight />
-            </button>
-          )}
         </>
       </div>
     </div>

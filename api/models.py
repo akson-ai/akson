@@ -21,3 +21,7 @@ class SendMessageRequest(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()).replace("-", ""))
     content: str
     assistant: Optional[str] = None
+
+
+class EditMessageRequest(BaseModel):
+    content: str

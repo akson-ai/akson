@@ -12,6 +12,7 @@ function ChatApp({ chatId }) {
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState("");
   const [selectedAssistant, setSelectedAssistant] = useState(undefined);
+  const [editingMessage, setEditingMessage] = useState(null);
   const messageInputRef = useRef(null);
   const { data: state } = useSuspenseQuery({ queryKey: ["chats", chatId] });
 
@@ -64,27 +65,36 @@ function ChatApp({ chatId }) {
   const sendMessage = () => {
     if (!inputText.trim()) return;
 
-    const messageId = crypto.randomUUID().toString().replace(/-/g, "");
-
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: messageId,
-        role: "user",
-        name: "You",
+    if (editingMessage) {
+      // Handle editing existing message
+      editMessageMutation.mutate({
+        messageId: editingMessage,
         content: inputText,
-      },
-    ]);
+      });
+    } else {
+      // Handle new message
+      const messageId = crypto.randomUUID().toString().replace(/-/g, "");
 
-    abortControllerRef.current = new AbortController();
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: messageId,
+          role: "user",
+          name: "You",
+          content: inputText,
+        },
+      ]);
 
-    sendMessageMutation.mutate({
-      id: messageId,
-      content: inputText,
-      assistant: selectedAssistant,
-    });
+      abortControllerRef.current = new AbortController();
 
-    setInputText("");
+      sendMessageMutation.mutate({
+        id: messageId,
+        content: inputText,
+        assistant: selectedAssistant,
+      });
+
+      setInputText("");
+    }
   };
 
   const deleteMessage = (messageId) => {
@@ -120,6 +130,38 @@ function ChatApp({ chatId }) {
     retryMessageMutation.mutate(messageId);
   };
 
+  const editMessage = (messageId) => {
+    const message = messages.find((msg) => msg.id === messageId);
+    if (message && message.role === "user") {
+      setEditingMessage(messageId);
+      setInputText(message.content);
+      messageInputRef.current?.focus();
+    }
+  };
+
+  const cancelEdit = () => {
+    setEditingMessage(null);
+    setInputText("");
+  };
+
+  const editMessageMutation = useMutation({
+    mutationFn: async ({ messageId, content }) => {
+      await fetch(`${API_BASE_URL}/chats/${chatId}/messages/${messageId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ content }),
+      });
+    },
+    onSuccess: (_, { messageId, content }) => {
+      setMessages((prev) =>
+        prev.map((msg) => (msg.id === messageId ? { ...msg, content } : msg))
+      );
+      setEditingMessage(null);
+      setInputText("");
+    },
+  });
+
   return (
     <>
       <Header
@@ -130,12 +172,14 @@ function ChatApp({ chatId }) {
       />
 
       <div className="flex flex-col max-w-5xl mx-auto h-[calc(100vh-64px)] w-full">
-        <History messages={messages} onDeleteMessage={deleteMessage} onRetryMessage={retryMessage} />
+        <History messages={messages} onDeleteMessage={deleteMessage} onRetryMessage={retryMessage} onEditMessage={editMessage} />
         <Input
           inputText={inputText}
           messageInputRef={messageInputRef}
           onInputChange={setInputText}
           onSendMessage={sendMessage}
+          isEditing={!!editingMessage}
+          onCancelEdit={cancelEdit}
         />
       </div>
 
