@@ -3,14 +3,15 @@ import "./App.css";
 import Drawer from "./components/Drawer";
 import ChatApp from "./components/ChatApp";
 import { API_BASE_URL } from "./constants";
+import { generateChatId } from "./utils/idGenerator";
 
-// Redirect from root path to /chat with a new UUID
-// or generate new UUID if at /chat without ID
+// Redirect from root path to /chat with a new ID
+// or generate new ID if at /chat without ID
 if (
   window.location.pathname === "/" ||
   (window.location.pathname === "/chat" && !new URLSearchParams(window.location.search).get("id"))
 ) {
-  const newId = crypto.randomUUID().toString().replace(/-/g, "");
+  const newId = generateChatId();
   window.location.href = `/chat?id=${newId}`;
 }
 

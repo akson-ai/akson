@@ -6,6 +6,7 @@ import History from "./History";
 import Input from "./Input";
 import KeyboardShortcuts from "./KeyboardShortcuts";
 import { useEvents } from "../hooks/events";
+import { generateMessageId } from "../utils/idGenerator";
 
 function ChatApp({ chatId }) {
   const abortControllerRef = useRef(null);
@@ -73,7 +74,7 @@ function ChatApp({ chatId }) {
       });
     } else {
       // Handle new message
-      const messageId = crypto.randomUUID().toString().replace(/-/g, "");
+      const messageId = generateMessageId();
 
       setMessages((prev) => [
         ...prev,
