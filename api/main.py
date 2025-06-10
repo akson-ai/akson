@@ -225,6 +225,24 @@ async def retry_message(message_id: str, chat: Chat = Depends(deps.get_chat)):
         chat.state.save_to_disk()
 
 
+@app.post("/chats/{chat_id}/fork/{message_id}")
+async def fork_chat(message_id: str, state: ChatState = Depends(deps.get_chat_state)):
+    """Fork a chat by creating a new chat with messages up to and including the specified message."""
+    message_index = [msg.id for msg in state.messages].index(message_id)
+    if message_index is None:
+        return JSONResponse(status_code=404, content={"detail": "Message not found"})
+
+    # Create new chat state with messages up to and including the selected message
+    new_state = ChatState(
+        messages=state.messages[: message_index + 1],
+        assistant=state.assistant,
+        title=f"{state.title} (forked from {state.id})",
+    )
+
+    new_state.save_to_disk()
+    return {"chat_id": new_state.id}
+
+
 @app.delete("/chats/{chat_id}")
 async def delete_chat(chat_id: str):
     """Delete a chat by its ID."""

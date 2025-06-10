@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import Message from "./Message";
 
-function History({ messages, onDeleteMessage, onRetryMessage, onEditMessage }) {
+function History({ messages, onDeleteMessage, onRetryMessage, onEditMessage, onForkMessage }) {
   const chatHistoryRef = useRef(null);
   const [scrolledToBottom, setScrolledToBottom] = useState(true);
 
@@ -42,6 +42,7 @@ function History({ messages, onDeleteMessage, onRetryMessage, onEditMessage }) {
           onDelete={onDeleteMessage}
           onRetry={onRetryMessage}
           onEdit={onEditMessage}
+          onFork={onForkMessage}
         />
       ))}
     </div>

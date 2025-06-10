@@ -3,10 +3,10 @@ import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
-import { FaTrash, FaCopy, FaChevronRight, FaChevronDown, FaArrowRotateRight } from "react-icons/fa6";
+import { FaTrash, FaCopy, FaChevronRight, FaChevronDown, FaArrowRotateRight, FaCodeFork } from "react-icons/fa6";
 import { FaTools, FaEdit } from "react-icons/fa";
 
-function Message({ id, role, name, content, toolCall, toolCallId, category, onDelete, onRetry, onEdit }) {
+function Message({ id, role, name, content, toolCall, toolCallId, category, onDelete, onRetry, onEdit, onFork }) {
   const [isHovered, setIsHovered] = useState(false);
   const [isToolExpanded, setIsToolExpanded] = useState(false);
   const categoryTag = category ? `chat-bubble-${category}` : "";
@@ -120,6 +120,13 @@ function Message({ id, role, name, content, toolCall, toolCallId, category, onDe
               <FaArrowRotateRight />
             </button>
           )}
+          <button
+            className="btn btn-xs btn-ghost btn-square"
+            onClick={() => onFork(id)}
+            title="Fork chat from here"
+          >
+            <FaCodeFork />
+          </button>
           <button
             className="btn btn-xs btn-ghost btn-square btn-error"
             onClick={() => onDelete(id)}

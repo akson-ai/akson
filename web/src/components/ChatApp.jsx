@@ -154,13 +154,37 @@ function ChatApp({ chatId }) {
       });
     },
     onSuccess: (_, { messageId, content }) => {
-      setMessages((prev) =>
-        prev.map((msg) => (msg.id === messageId ? { ...msg, content } : msg))
-      );
+      setMessages((prev) => prev.map((msg) => (msg.id === messageId ? { ...msg, content } : msg)));
       setEditingMessage(null);
       setInputText("");
     },
   });
+
+  const forkMessageMutation = useMutation({
+    mutationFn: async (messageId) => {
+      const response = await fetch(`${API_BASE_URL}/chats/${chatId}/fork/${messageId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+      });
+      return response.json();
+    },
+    onSuccess: (data) => {
+      // Navigate to the new forked chat
+      window.location.href = `/chat?id=${data.chat_id}`;
+    },
+  });
+
+  const forkMessage = (messageId) => {
+    if (
+      !confirm(
+        "Are you sure you want to fork the chat from this message? This will create a new chat with messages up to this point.",
+      )
+    ) {
+      return;
+    }
+    forkMessageMutation.mutate(messageId);
+  };
 
   return (
     <>
@@ -172,7 +196,13 @@ function ChatApp({ chatId }) {
       />
 
       <div className="flex flex-col max-w-5xl mx-auto h-[calc(100vh-64px)] w-full">
-        <History messages={messages} onDeleteMessage={deleteMessage} onRetryMessage={retryMessage} onEditMessage={editMessage} />
+        <History
+          messages={messages}
+          onDeleteMessage={deleteMessage}
+          onRetryMessage={retryMessage}
+          onEditMessage={editMessage}
+          onForkMessage={forkMessage}
+        />
         <Input
           inputText={inputText}
           messageInputRef={messageInputRef}
