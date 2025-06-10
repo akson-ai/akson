@@ -163,7 +163,7 @@ function ChatApp({ chatId }) {
 
   const forkMessageMutation = useMutation({
     mutationFn: async (messageId) => {
-      const response = await fetch(`${API_BASE_URL}/chats/${chatId}/fork/${messageId}`, {
+      const response = await fetch(`${API_BASE_URL}/chats/${chatId}/messages/${messageId}/fork`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",

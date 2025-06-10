@@ -225,7 +225,7 @@ async def retry_message(message_id: str, chat: Chat = Depends(deps.get_chat)):
         chat.state.save_to_disk()
 
 
-@app.post("/chats/{chat_id}/fork/{message_id}")
+@app.post("/chats/{chat_id}/messages/{message_id}/fork")
 async def fork_chat(message_id: str, state: ChatState = Depends(deps.get_chat_state)):
     """Fork a chat by creating a new chat with messages up to and including the specified message."""
     message_index = [msg.id for msg in state.messages].index(message_id)
