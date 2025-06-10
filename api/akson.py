@@ -3,11 +3,12 @@ akson package contains the Assistant interface that needs to be implemented by a
 """
 
 import os
-import uuid
 from abc import ABC, abstractmethod
 from typing import Callable, Coroutine, Literal, Optional
 
 from pydantic import BaseModel, Field
+
+from id_generator import generate_chat_id, generate_message_id
 
 
 class ToolCall(BaseModel):
@@ -17,7 +18,7 @@ class ToolCall(BaseModel):
 
 
 class Message(BaseModel):
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()).replace("-", ""))
+    id: str = Field(default_factory=generate_message_id)
     role: Literal["user", "assistant", "tool"]
     name: Optional[str] = None  # Name of the assistant
     content: str
@@ -28,7 +29,7 @@ class Message(BaseModel):
 class ChatState(BaseModel):
     """Chat that can be saved and loaded from a file."""
 
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()).replace("-", ""))
+    id: str = Field(default_factory=generate_chat_id)
     messages: list[Message] = []
     assistant: Optional[str] = None
     title: Optional[str] = None

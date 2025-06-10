@@ -1,10 +1,11 @@
 """This module contains the Pydantic models for the API."""
 
-import uuid
 from datetime import datetime
 from typing import Optional
 
 from pydantic import BaseModel, Field
+
+from id_generator import generate_message_id
 
 
 class Assistant(BaseModel):
@@ -18,7 +19,7 @@ class ChatSummary(BaseModel):
 
 
 class SendMessageRequest(BaseModel):
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()).replace("-", ""))
+    id: str = Field(default_factory=generate_message_id)
     content: str
     assistant: Optional[str] = None
 
