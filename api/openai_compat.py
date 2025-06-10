@@ -63,11 +63,15 @@ def chat_streaming_chunk(response: ChatCompletionResponse, content: str, *, fini
 
 
 def setup_routes(app: FastAPI):
-    async def chat_completions(request: ChatCompletionRequest):
+    async def chat_completions(
+        request: ChatCompletionRequest, convert_system_to_user: bool = False, drop_system: bool = False
+    ):
         assistant = registry.get_assistant(request.model)
 
         chat = Chat()
-        chat.state.messages = list(_convert_messages(request.messages))
+        chat.state.messages = list(
+            _convert_messages(request.messages, convert_system_to_user=convert_system_to_user, drop_system=drop_system)
+        )
 
         runner = Runner(assistant, chat)
         new_messages = await runner.run()
@@ -107,12 +111,18 @@ def setup_routes(app: FastAPI):
     app.add_api_route("/v1/chat/completions", chat_completions, methods=["POST"], response_model=ChatCompletionResponse)
 
 
-def _convert_messages(messages: list[Message]) -> Iterable[AksonMessage]:
+def _convert_messages(
+    messages: list[Message], convert_system_to_user: bool = False, drop_system: bool = False
+) -> Iterable[AksonMessage]:
     for message in messages:
-        match message.role:
-            case "system" | "user":
-                yield AksonMessage(role="user", content=message.content)
-            case "assistant":
-                yield AksonMessage(role="assistant", content=message.content)
-            case _:
-                raise ValueError(f"Unknown role: {message.role}")
+        if message.role == "system" and drop_system:
+            continue
+
+        role = message.role
+        if message.role == "system" and convert_system_to_user:
+            role = "user"
+
+        if role not in ("user", "assistant"):
+            raise ValueError(f"Unknown role: {message.role}")
+
+        yield AksonMessage(role=role, content=message.content)
