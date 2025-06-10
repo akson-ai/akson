@@ -1,19 +1,16 @@
 import json
 import random
 import time
-from typing import Literal
+from typing import Iterable, Literal
 
-from fastapi import FastAPI, HTTPException
-from openai.types.chat import (
-    ChatCompletionAssistantMessageParam,
-    ChatCompletionMessageParam,
-    ChatCompletionSystemMessageParam,
-    ChatCompletionUserMessageParam,
-)
+from fastapi import FastAPI
 from pydantic import BaseModel, Field
 from sse_starlette import EventSourceResponse
 
-from akson import Assistant
+from akson import Chat
+from akson import Message as AksonMessage
+from deps import registry
+from runner import Runner
 
 
 class Message(BaseModel):
@@ -65,17 +62,16 @@ def chat_streaming_chunk(response: ChatCompletionResponse, content: str, *, fini
     }
 
 
-def setup_routes(app: FastAPI, agents: dict[str, Assistant]):
+def setup_routes(app: FastAPI):
     async def chat_completions(request: ChatCompletionRequest):
-        if request.model == "gpt-4o":
-            request.model = "ChatGPT"
-        try:
-            agent = agents[request.model]
-        except KeyError:
-            raise HTTPException(status_code=404, detail="Agent not found")
+        assistant = registry.get_assistant(request.model)
 
-        messages = _convert_messages(request.messages)
-        content = agent.complete(messages)
+        chat = Chat()
+        chat.state.messages = list(_convert_messages(request.messages))
+
+        runner = Runner(assistant, chat)
+        new_messages = await runner.run()
+        content = new_messages[-1].content
 
         completion_tokens = len(content.split())
         prompt_tokens = sum(len(msg.content.split()) for msg in request.messages)
@@ -111,15 +107,12 @@ def setup_routes(app: FastAPI, agents: dict[str, Assistant]):
     app.add_api_route("/v1/chat/completions", chat_completions, methods=["POST"], response_model=ChatCompletionResponse)
 
 
-def _convert_messages(messages: list[Message]) -> list[ChatCompletionMessageParam]:
-    ret = []
+def _convert_messages(messages: list[Message]) -> Iterable[AksonMessage]:
     for message in messages:
-        if message.role == "system":
-            ret.append(ChatCompletionSystemMessageParam(role="system", content=message.content))
-        elif message.role == "user":
-            ret.append(ChatCompletionUserMessageParam(role="user", content=message.content))
-        elif message.role == "assistant":
-            ret.append(ChatCompletionAssistantMessageParam(role="assistant", content=message.content))
-        else:
-            raise ValueError(f"Unknown role: {message.role}")
-    return ret
+        match message.role:
+            case "system" | "user":
+                yield AksonMessage(role="user", content=message.content)
+            case "assistant":
+                yield AksonMessage(role="assistant", content=message.content)
+            case _:
+                raise ValueError(f"Unknown role: {message.role}")

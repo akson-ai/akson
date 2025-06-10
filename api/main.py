@@ -20,6 +20,7 @@ from starlette.requests import ClientDisconnect
 
 import deps
 import models
+import openai_compat
 import tasks
 from akson import Assistant, Chat, ChatState, Message
 from logger import logger
@@ -36,6 +37,8 @@ app.add_middleware(
     allow_headers=["*"],
     allow_credentials=True,
 )
+
+openai_compat.setup_routes(app)
 
 
 @app.exception_handler(RequestValidationError)
