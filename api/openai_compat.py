@@ -108,6 +108,7 @@ def setup_routes(app: FastAPI):
 
         return EventSourceResponse(generator())
 
+    # TODO add /v1/models endpoint
     app.add_api_route("/v1/chat/completions", chat_completions, methods=["POST"], response_model=ChatCompletionResponse)
 
 
