@@ -112,8 +112,19 @@ def models():
 
 
 def setup_routes(app: FastAPI):
-    app.add_api_route("/v1/chat/completions", chat_completions, methods=["POST"], response_model=ChatCompletionResponse)
-    app.add_api_route("/v1/models", models, methods=["GET"])
+    app.add_api_route(
+        "/v1/chat/completions",
+        chat_completions,
+        methods=["POST"],
+        response_model=ChatCompletionResponse,
+        summary="OpenAI compatible chat completions endpoint",
+    )
+    app.add_api_route(
+        "/v1/models",
+        models,
+        methods=["GET"],
+        summary="OpenAI compatible models endpoint",
+    )
 
 
 def _convert_messages(messages: list[Message]) -> Iterable[AksonMessage]:
