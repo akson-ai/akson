@@ -104,9 +104,16 @@ async def chat_completions(request: ChatCompletionRequest):
     return EventSourceResponse(generator())
 
 
+def models():
+    return {
+        "object": "list",
+        "data": [{"id": assistant.name, "object": "model", "owned_by": "akson"} for assistant in registry.assistants],
+    }
+
+
 def setup_routes(app: FastAPI):
-    # TODO add /v1/models endpoint
     app.add_api_route("/v1/chat/completions", chat_completions, methods=["POST"], response_model=ChatCompletionResponse)
+    app.add_api_route("/v1/models", models, methods=["GET"])
 
 
 def _convert_messages(messages: list[Message]) -> Iterable[AksonMessage]:
