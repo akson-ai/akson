@@ -62,48 +62,49 @@ def chat_streaming_chunk(response: ChatCompletionResponse, content: str, *, fini
     }
 
 
+async def chat_completions(request: ChatCompletionRequest):
+    assistant = registry.get_assistant(request.model)
+
+    chat = Chat()
+    chat.state.messages = list(_convert_messages(request.messages))
+
+    runner = Runner(assistant, chat)
+    new_messages = await runner.run()
+    content = new_messages[-1].content
+
+    completion_tokens = len(content.split())
+    prompt_tokens = sum(len(msg.content.split()) for msg in request.messages)
+
+    response = ChatCompletionResponse(
+        id=f"chatcmpl-{random.randint(1000000, 9999999)}",
+        object="chat.completion",
+        created=int(time.time()),
+        model=request.model,
+        choices=[Choice(index=0, message=Message(role="assistant", content=content), finish_reason="stop")],
+        usage=Usage(
+            prompt_tokens=prompt_tokens,
+            completion_tokens=completion_tokens,
+            total_tokens=prompt_tokens + completion_tokens,
+        ),
+    )
+
+    if not request.stream:
+        return response
+
+    async def generator():
+        yield {"data": json.dumps(chat_streaming_chunk(response, ""))}
+
+        # Fake streaming of whole content
+        for word in content.split():
+            yield {"data": json.dumps(chat_streaming_chunk(response, word + " "))}
+
+        yield {"data": json.dumps(chat_streaming_chunk(response, "", finish_reason="stop"))}
+        yield "[DONE]"
+
+    return EventSourceResponse(generator())
+
+
 def setup_routes(app: FastAPI):
-    async def chat_completions(request: ChatCompletionRequest):
-        assistant = registry.get_assistant(request.model)
-
-        chat = Chat()
-        chat.state.messages = list(_convert_messages(request.messages))
-
-        runner = Runner(assistant, chat)
-        new_messages = await runner.run()
-        content = new_messages[-1].content
-
-        completion_tokens = len(content.split())
-        prompt_tokens = sum(len(msg.content.split()) for msg in request.messages)
-
-        response = ChatCompletionResponse(
-            id=f"chatcmpl-{random.randint(1000000, 9999999)}",
-            object="chat.completion",
-            created=int(time.time()),
-            model=request.model,
-            choices=[Choice(index=0, message=Message(role="assistant", content=content), finish_reason="stop")],
-            usage=Usage(
-                prompt_tokens=prompt_tokens,
-                completion_tokens=completion_tokens,
-                total_tokens=prompt_tokens + completion_tokens,
-            ),
-        )
-
-        if not request.stream:
-            return response
-
-        async def generator():
-            yield {"data": json.dumps(chat_streaming_chunk(response, ""))}
-
-            # Fake streaming of whole content
-            for word in content.split():
-                yield {"data": json.dumps(chat_streaming_chunk(response, word + " "))}
-
-            yield {"data": json.dumps(chat_streaming_chunk(response, "", finish_reason="stop"))}
-            yield "[DONE]"
-
-        return EventSourceResponse(generator())
-
     # TODO add /v1/models endpoint
     app.add_api_route("/v1/chat/completions", chat_completions, methods=["POST"], response_model=ChatCompletionResponse)
 
