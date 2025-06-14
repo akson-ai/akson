@@ -217,7 +217,6 @@ class MCPToolkit(Toolkit):
 
 
 class TaskStatus(StrEnum):
-    WORKING = "WORKING"
     INPUT_REQUIRED = "INPUT_REQUIRED"
     COMPLETED = "COMPLETED"
     FAILED = "FAILED"
