@@ -300,7 +300,7 @@ class AssistantToolkit(Toolkit):
 
         task_analyzer = LLMAssistant(
             name="TaskAnalyzer",
-            model="gpt-4.1-nano",
+            model="gpt-4.1",
             system_prompt="""
             Analyze the conversation and extract the task details and output.
             You must extract all details asked from the conversation because the user cannot see this conversation.
