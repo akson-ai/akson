@@ -4,8 +4,7 @@ This module contains the dependencies for the FastAPI app.
 
 import os
 
-from fastapi import Depends, Request
-from starlette.requests import ClientDisconnect
+from fastapi import Depends
 
 import models
 from akson import Assistant, Chat, ChatState
@@ -36,10 +35,8 @@ def get_chat_state(chat_id: str) -> ChatState:
         return ChatState.create_new(chat_id, _get_default_assistant().name)
 
 
-def get_chat(chat_id: str, request: Request) -> Chat:
+def get_chat(chat_id: str) -> Chat:
     async def publish(message):
-        if await request.is_disconnected():
-            raise ClientDisconnect
         return await pubsub.publish(chat_id, message)
 
     return Chat(state=get_chat_state(chat_id), publisher=publish)
