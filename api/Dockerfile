@@ -14,5 +14,6 @@ ENV PATH="/app/.venv/bin:$PATH"
 
 COPY . /app
 EXPOSE 8000
+VOLUME "/root/.cache/uv" "/root/.npm"
 ENTRYPOINT ["uvicorn", "--host=0.0.0.0", "--port=8000", "--reload", "--timeout-graceful-shutdown=0"]
 CMD ["main:app"]
