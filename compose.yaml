@@ -2,16 +2,15 @@ name: akson
 services:
   api:
     build:
-      context: ./api
+      context: ./api-go
     develop:
       watch:
-        - path: ./api
+        - path: ./api-go
           action: sync
           target: /app
           ignore:
-            - .venv/
             - chats/
-        - path: ./api/pyproject.toml
+        - path: ./api-go/go.mod
           action: rebuild
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
@@ -23,7 +22,7 @@ services:
     ports:
       - ${AKSON_API_PORT}:8000
     volumes:
-      - ./api/chats:/app/chats
+      - ./api-go/chats:/root/chats
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
       - ALLOW_ORIGINS=${AKSON_WEB_EXTERNAL_URL}
