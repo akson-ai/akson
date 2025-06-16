@@ -67,7 +67,7 @@ func (h *Handler) GetChats(w http.ResponseWriter, r *http.Request) {
 	chatsDir := getChatsDirectory()
 	entries, err := os.ReadDir(chatsDir)
 	if err != nil {
-		if os.IsNotExist(err) {
+		if errors.Is(err, os.ErrNotExist) {
 			// Return empty list if chats directory doesn't exist
 			w.Header().Set("Content-Type", "application/json")
 			json.NewEncoder(w).Encode(chatSummaries)
@@ -131,13 +131,9 @@ func (h *Handler) GetChatState(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	state, err := models.LoadFromDisk(chatID)
+	state, err := h.getChatState(chatID)
 	if err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			http.Error(w, "Chat not found", http.StatusNotFound)
-			return
-		}
-		slog.Error("Failed to load chat", "chatID", chatID, "error", err)
+		slog.Error("Failed to get chat state", "chatID", chatID, "error", err)
 		http.Error(w, "Failed to load chat", http.StatusInternalServerError)
 		return
 	}
@@ -358,7 +354,7 @@ func (h *Handler) DeleteChat(w http.ResponseWriter, r *http.Request) {
 	}
 	
 	filePath := models.FilePath(chatID)
-	if err := os.Remove(filePath); err != nil && !os.IsNotExist(err) {
+	if err := os.Remove(filePath); err != nil && !errors.Is(err, os.ErrNotExist) {
 		slog.Error("Failed to delete chat file", "chatID", chatID, "filePath", filePath, "error", err)
 		http.Error(w, "Failed to delete chat", http.StatusInternalServerError)
 		return
@@ -413,7 +409,7 @@ func (h *Handler) GetEvents(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) getChatState(chatID string) (*models.ChatState, error) {
 	state, err := models.LoadFromDisk(chatID)
 	if err != nil {
-		if os.IsNotExist(err) {
+		if errors.Is(err, os.ErrNotExist) {
 			// Create new chat
 			defaultAssistant := h.registry.GetDefaultAssistant()
 			return models.NewChatState(chatID, defaultAssistant.GetName()), nil
