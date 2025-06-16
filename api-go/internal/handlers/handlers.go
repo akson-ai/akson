@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -72,6 +73,7 @@ func (h *Handler) GetChats(w http.ResponseWriter, r *http.Request) {
 			json.NewEncoder(w).Encode(chatSummaries)
 			return
 		}
+		slog.Error("Failed to read chats directory", "error", err)
 		http.Error(w, "Failed to read chats directory", http.StatusInternalServerError)
 		return
 	}
@@ -129,9 +131,14 @@ func (h *Handler) GetChatState(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	state, err := h.getChatState(chatID)
+	state, err := models.LoadFromDisk(chatID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		if errors.Is(err, os.ErrNotExist) {
+			http.Error(w, "Chat not found", http.StatusNotFound)
+			return
+		}
+		slog.Error("Failed to load chat", "chatID", chatID, "error", err)
+		http.Error(w, "Failed to load chat", http.StatusInternalServerError)
 		return
 	}
 	
@@ -161,12 +168,14 @@ func (h *Handler) SetAssistant(w http.ResponseWriter, r *http.Request) {
 	
 	state, err := h.getChatState(chatID)
 	if err != nil {
+		slog.Error("Failed to get chat state for assistant update", "chatID", chatID, "error", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	
 	state.Assistant = &assistantName
 	if err := state.SaveToDisk(); err != nil {
+		slog.Error("Failed to save chat state after assistant update", "chatID", chatID, "error", err)
 		http.Error(w, "Failed to save chat state", http.StatusInternalServerError)
 		return
 	}
@@ -204,6 +213,7 @@ func (h *Handler) SendMessage(w http.ResponseWriter, r *http.Request) {
 	// Get chat and assistant
 	chat, err := h.getChat(chatID)
 	if err != nil {
+		slog.Error("Failed to get chat for message send", "chatID", chatID, "error", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -267,6 +277,7 @@ func (h *Handler) EditMessage(w http.ResponseWriter, r *http.Request) {
 	
 	state, err := h.getChatState(chatID)
 	if err != nil {
+		slog.Error("Failed to get chat state for message edit", "chatID", chatID, "messageID", messageID, "error", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -287,6 +298,7 @@ func (h *Handler) EditMessage(w http.ResponseWriter, r *http.Request) {
 	}
 	
 	if err := state.SaveToDisk(); err != nil {
+		slog.Error("Failed to save chat state after message edit", "chatID", chatID, "messageID", messageID, "error", err)
 		http.Error(w, "Failed to save chat state", http.StatusInternalServerError)
 		return
 	}
@@ -301,6 +313,7 @@ func (h *Handler) DeleteMessage(w http.ResponseWriter, r *http.Request) {
 	
 	state, err := h.getChatState(chatID)
 	if err != nil {
+		slog.Error("Failed to get chat state for message delete", "chatID", chatID, "messageID", messageID, "error", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -316,6 +329,7 @@ func (h *Handler) DeleteMessage(w http.ResponseWriter, r *http.Request) {
 	state.Messages = newMessages
 	
 	if err := state.SaveToDisk(); err != nil {
+		slog.Error("Failed to save chat state after message delete", "chatID", chatID, "messageID", messageID, "error", err)
 		http.Error(w, "Failed to save chat state", http.StatusInternalServerError)
 		return
 	}
@@ -345,6 +359,7 @@ func (h *Handler) DeleteChat(w http.ResponseWriter, r *http.Request) {
 	
 	filePath := models.FilePath(chatID)
 	if err := os.Remove(filePath); err != nil && !os.IsNotExist(err) {
+		slog.Error("Failed to delete chat file", "chatID", chatID, "filePath", filePath, "error", err)
 		http.Error(w, "Failed to delete chat", http.StatusInternalServerError)
 		return
 	}
@@ -374,6 +389,7 @@ func (h *Handler) GetEvents(w http.ResponseWriter, r *http.Request) {
 	// Get flusher for real-time streaming
 	flusher, ok := w.(http.Flusher)
 	if !ok {
+		slog.Error("HTTP response writer does not support streaming", "chatID", chatID)
 		http.Error(w, "Streaming unsupported", http.StatusInternalServerError)
 		return
 	}
