@@ -2,15 +2,15 @@ name: akson
 services:
   api:
     build:
-      context: ./api-go
+      context: ./api
     develop:
       watch:
-        - path: ./api-go
+        - path: ./api
           action: sync
           target: /app
           ignore:
             - chats/
-        - path: ./api-go/go.mod
+        - path: ./api/go.mod
           action: rebuild
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
@@ -22,7 +22,7 @@ services:
     ports:
       - ${AKSON_API_PORT}:8000
     volumes:
-      - ./api-go/chats:/root/chats
+      - ./api/chats:/root/chats
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
       - ALLOW_ORIGINS=${AKSON_WEB_EXTERNAL_URL}
@@ -65,6 +65,8 @@ services:
     build:
       context: ./
       dockerfile: ./telegram-bot/Dockerfile
+    profiles:
+      - telegram
     develop:
       watch:
         - path: ./telegram-bot

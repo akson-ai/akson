@@ -1,19 +1,46 @@
-FROM python:3.12 AS base
-COPY --from=ghcr.io/astral-sh/uv:0.6.17 /uv /uvx /bin/
+# Multi-stage build for Go application
+FROM golang:1.23-alpine AS builder
 
-# Install npm for running MCP servers written in Javascript
-RUN apt-get update && apt-get install -y docker.io npm
+# Install git for go modules
+RUN apk add --no-cache git
 
-# Install dependencies first
+# Set working directory
 WORKDIR /app
-RUN --mount=type=cache,target=/root/.cache/uv \
-    --mount=type=bind,source=uv.lock,target=uv.lock \
-    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
-    uv sync --locked --no-install-project
-ENV PATH="/app/.venv/bin:$PATH"
 
-COPY . /app
+# Copy go mod files
+COPY go.mod go.sum ./
+
+# Download dependencies
+RUN go mod download
+
+# Copy source code
+COPY . .
+
+# Build the application
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main ./cmd/api
+
+# Final stage - debugging-friendly image
+FROM ubuntu:22.04
+
+# Install essential tools for debugging and MCP integration
+RUN apt-get update && apt-get install -y \
+    ca-certificates \
+    curl \
+    vim \
+    docker.io \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create app directory
+WORKDIR /root/
+
+# Copy the binary from builder stage
+COPY --from=builder /app/main .
+
+# Create chats directory
+RUN mkdir -p chats
+
+# Expose port
 EXPOSE 8000
-VOLUME "/root/.cache/uv" "/root/.npm"
-ENTRYPOINT ["uvicorn", "--host=0.0.0.0", "--port=8000", "--reload", "--timeout-graceful-shutdown=0"]
-CMD ["main:app"]
+
+# Run the application
+CMD ["./main"]
