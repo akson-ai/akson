@@ -6,12 +6,9 @@ services:
     develop:
       watch:
         - path: ./api
-          action: sync
-          target: /app
+          action: rebuild
           ignore:
             - chats/
-        - path: ./api/go.mod
-          action: rebuild
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 10s
