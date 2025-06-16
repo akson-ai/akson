@@ -19,11 +19,16 @@ COPY . .
 # Build the application
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main ./cmd/api
 
-# Final stage - minimal runtime image
-FROM alpine:latest
+# Final stage - debugging-friendly image
+FROM ubuntu:22.04
 
-# Install ca-certificates for HTTPS calls and docker for MCP integration
-RUN apk --no-cache add ca-certificates docker
+# Install essential tools for debugging and MCP integration
+RUN apt-get update && apt-get install -y \
+    ca-certificates \
+    curl \
+    vim \
+    docker.io \
+    && rm -rf /var/lib/apt/lists/*
 
 # Create app directory
 WORKDIR /root/
