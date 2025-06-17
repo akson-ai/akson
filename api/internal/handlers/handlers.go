@@ -1,8 +1,8 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -13,6 +13,7 @@ import (
 
 	"github.com/cenkalti/akson/internal/models"
 	"github.com/cenkalti/akson/internal/registry"
+	"github.com/cenkalti/akson/internal/repository"
 	"github.com/cenkalti/akson/internal/streaming"
 )
 
@@ -28,18 +29,36 @@ func getChatsDirectory() string {
 type Handler struct {
 	pubsub   *streaming.PubSub
 	registry *registry.Registry
+	repo     repository.Repository
 }
 
 // NewHandler creates a new handler
-func NewHandler(pubsub *streaming.PubSub, registry *registry.Registry) *Handler {
+func NewHandler(pubsub *streaming.PubSub, registry *registry.Registry, repo repository.Repository) *Handler {
 	return &Handler{
 		pubsub:   pubsub,
 		registry: registry,
+		repo:     repo,
 	}
 }
 
 // HealthCheck handles health check requests
 func (h *Handler) HealthCheck(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	
+	// Check database health by trying to get chats count
+	_, err := h.repo.GetChats(ctx)
+	if err != nil {
+		slog.Error("Database health check failed", "error", err)
+		response := map[string]string{
+			"status": "unhealthy",
+			"error":  "database connection failed",
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusServiceUnavailable)
+		json.NewEncoder(w).Encode(response)
+		return
+	}
+
 	response := map[string]string{"status": "healthy"}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
@@ -62,65 +81,25 @@ func (h *Handler) GetAssistants(w http.ResponseWriter, r *http.Request) {
 
 // GetChats returns all chat sessions
 func (h *Handler) GetChats(w http.ResponseWriter, r *http.Request) {
-	var chatSummaries []models.ChatSummary
-	
-	chatsDir := getChatsDirectory()
-	entries, err := os.ReadDir(chatsDir)
+	chatSummaries, err := h.repo.GetChats(r.Context())
 	if err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			// Return empty list if chats directory doesn't exist
-			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(chatSummaries)
-			return
-		}
-		slog.Error("Failed to read chats directory", "error", err)
-		http.Error(w, "Failed to read chats directory", http.StatusInternalServerError)
+		slog.Error("Failed to get chats", "error", err)
+		http.Error(w, "Failed to get chats", http.StatusInternalServerError)
 		return
 	}
-	
-	for _, entry := range entries {
-		if !entry.IsDir() && strings.HasSuffix(entry.Name(), ".json") {
-			chatID := strings.TrimSuffix(entry.Name(), ".json")
-			
-			state, err := models.LoadFromDisk(chatID)
-			if err != nil {
-				slog.Error("Failed to load chat", "chatID", chatID, "error", err)
-				continue
-			}
-			
-			// Get file modification time
-			filePath := models.FilePath(chatID)
-			info, err := os.Stat(filePath)
-			if err != nil {
-				slog.Error("Failed to stat chat file", "chatID", chatID, "error", err)
-				continue
-			}
-			
-			title := "Untitled Chat"
-			if state.Title != nil {
-				title = *state.Title
-			}
-			
-			chatSummaries = append(chatSummaries, models.ChatSummary{
-				ID:          chatID,
-				Title:       title,
-				LastUpdated: info.ModTime(),
-			})
-		}
-	}
-	
-	// Sort by last updated, newest first
-	// (Simple bubble sort for now)
-	for i := 0; i < len(chatSummaries)-1; i++ {
-		for j := 0; j < len(chatSummaries)-i-1; j++ {
-			if chatSummaries[j].LastUpdated.Before(chatSummaries[j+1].LastUpdated) {
-				chatSummaries[j], chatSummaries[j+1] = chatSummaries[j+1], chatSummaries[j]
-			}
+
+	// Convert to models.ChatSummary format
+	modelSummaries := make([]models.ChatSummary, len(chatSummaries))
+	for i, summary := range chatSummaries {
+		modelSummaries[i] = models.ChatSummary{
+			ID:          summary.ID,
+			Title:       summary.Title,
+			LastUpdated: summary.LastUpdated,
 		}
 	}
 	
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(chatSummaries)
+	json.NewEncoder(w).Encode(modelSummaries)
 }
 
 // GetChatState returns a specific chat state
@@ -131,11 +110,22 @@ func (h *Handler) GetChatState(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	state, err := h.getChatState(chatID)
+	state, err := h.repo.GetChat(r.Context(), chatID)
 	if err != nil {
-		slog.Error("Failed to get chat state", "chatID", chatID, "error", err)
-		http.Error(w, "Failed to load chat", http.StatusInternalServerError)
-		return
+		if strings.Contains(err.Error(), "not found") {
+			// Create new chat if it doesn't exist
+			defaultAssistant := h.registry.GetDefaultAssistant()
+			state, err = h.repo.CreateChat(r.Context(), chatID, defaultAssistant.GetName())
+			if err != nil {
+				slog.Error("Failed to create new chat", "chatID", chatID, "error", err)
+				http.Error(w, "Failed to create chat", http.StatusInternalServerError)
+				return
+			}
+		} else {
+			slog.Error("Failed to get chat state", "chatID", chatID, "error", err)
+			http.Error(w, "Failed to load chat", http.StatusInternalServerError)
+			return
+		}
 	}
 	
 	w.Header().Set("Content-Type", "application/json")  
@@ -162,17 +152,10 @@ func (h *Handler) SetAssistant(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	state, err := h.getChatState(chatID)
+	err := h.repo.UpdateChatAssistant(r.Context(), chatID, assistantName)
 	if err != nil {
-		slog.Error("Failed to get chat state for assistant update", "chatID", chatID, "error", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	
-	state.Assistant = &assistantName
-	if err := state.SaveToDisk(); err != nil {
-		slog.Error("Failed to save chat state after assistant update", "chatID", chatID, "error", err)
-		http.Error(w, "Failed to save chat state", http.StatusInternalServerError)
+		slog.Error("Failed to update chat assistant", "chatID", chatID, "error", err)
+		http.Error(w, "Failed to update chat assistant", http.StatusInternalServerError)
 		return
 	}
 	
@@ -195,7 +178,7 @@ func (h *Handler) SendMessage(w http.ResponseWriter, r *http.Request) {
 	
 	// Handle commands
 	if strings.HasPrefix(req.Content, "/") {
-		messages, err := h.handleCommand(chatID, req.Content)
+		messages, err := h.handleCommand(r.Context(), chatID, req.Content)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
@@ -207,7 +190,7 @@ func (h *Handler) SendMessage(w http.ResponseWriter, r *http.Request) {
 	}
 	
 	// Get chat and assistant
-	chat, err := h.getChat(chatID)
+	chat, err := h.getChat(r.Context(), chatID)
 	if err != nil {
 		slog.Error("Failed to get chat for message send", "chatID", chatID, "error", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -241,6 +224,14 @@ func (h *Handler) SendMessage(w http.ResponseWriter, r *http.Request) {
 	userMessage := models.NewMessage(models.RoleUser, req.Content)
 	userMessage.ID = req.ID
 	
+	// Save user message to repository
+	if err := h.repo.CreateMessage(r.Context(), chatID, userMessage); err != nil {
+		slog.Error("Failed to save user message", "error", err)
+		http.Error(w, "Failed to save message", http.StatusInternalServerError)
+		return
+	}
+	
+	// Add to chat state for assistant processing
 	chat.State.Messages = append(chat.State.Messages, userMessage)
 	
 	// Run assistant
@@ -250,9 +241,11 @@ func (h *Handler) SendMessage(w http.ResponseWriter, r *http.Request) {
 		h.sendErrorMessage(chat, err)
 	}
 	
-	// Save chat state
-	if err := chat.State.SaveToDisk(); err != nil {
-		slog.Error("Failed to save chat state", "error", err)
+	// Save all new messages to repository
+	for _, message := range chat.NewMessages {
+		if err := h.repo.CreateMessage(r.Context(), chatID, message); err != nil {
+			slog.Error("Failed to save assistant message", "messageID", message.ID, "error", err)
+		}
 	}
 	
 	// Return new messages
@@ -271,31 +264,10 @@ func (h *Handler) EditMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	state, err := h.getChatState(chatID)
+	err := h.repo.UpdateMessage(r.Context(), messageID, req.Content)
 	if err != nil {
-		slog.Error("Failed to get chat state for message edit", "chatID", chatID, "messageID", messageID, "error", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	
-	// Find and update message
-	found := false
-	for _, msg := range state.Messages {
-		if msg.ID == messageID {
-			msg.Content = req.Content
-			found = true
-			break
-		}
-	}
-	
-	if !found {
-		http.Error(w, "Message not found", http.StatusNotFound)
-		return
-	}
-	
-	if err := state.SaveToDisk(); err != nil {
-		slog.Error("Failed to save chat state after message edit", "chatID", chatID, "messageID", messageID, "error", err)
-		http.Error(w, "Failed to save chat state", http.StatusInternalServerError)
+		slog.Error("Failed to update message", "chatID", chatID, "messageID", messageID, "error", err)
+		http.Error(w, "Failed to update message", http.StatusInternalServerError)
 		return
 	}
 	
@@ -307,26 +279,10 @@ func (h *Handler) DeleteMessage(w http.ResponseWriter, r *http.Request) {
 	chatID := r.PathValue("id")
 	messageID := r.PathValue("messageId")
 	
-	state, err := h.getChatState(chatID)
+	err := h.repo.DeleteMessage(r.Context(), messageID)
 	if err != nil {
-		slog.Error("Failed to get chat state for message delete", "chatID", chatID, "messageID", messageID, "error", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	
-	// Filter out the message
-	var newMessages []*models.Message
-	for _, msg := range state.Messages {
-		if msg.ID != messageID {
-			newMessages = append(newMessages, msg)
-		}
-	}
-	
-	state.Messages = newMessages
-	
-	if err := state.SaveToDisk(); err != nil {
-		slog.Error("Failed to save chat state after message delete", "chatID", chatID, "messageID", messageID, "error", err)
-		http.Error(w, "Failed to save chat state", http.StatusInternalServerError)
+		slog.Error("Failed to delete message", "chatID", chatID, "messageID", messageID, "error", err)
+		http.Error(w, "Failed to delete message", http.StatusInternalServerError)
 		return
 	}
 	
@@ -353,9 +309,9 @@ func (h *Handler) DeleteChat(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	filePath := models.FilePath(chatID)
-	if err := os.Remove(filePath); err != nil && !errors.Is(err, os.ErrNotExist) {
-		slog.Error("Failed to delete chat file", "chatID", chatID, "filePath", filePath, "error", err)
+	err := h.repo.DeleteChat(r.Context(), chatID)
+	if err != nil {
+		slog.Error("Failed to delete chat", "chatID", chatID, "error", err)
 		http.Error(w, "Failed to delete chat", http.StatusInternalServerError)
 		return
 	}
@@ -406,21 +362,21 @@ func (h *Handler) GetEvents(w http.ResponseWriter, r *http.Request) {
 
 // Helper methods
 
-func (h *Handler) getChatState(chatID string) (*models.ChatState, error) {
-	state, err := models.LoadFromDisk(chatID)
+func (h *Handler) getChatState(ctx context.Context, chatID string) (*models.ChatState, error) {
+	state, err := h.repo.GetChat(ctx, chatID)
 	if err != nil {
-		if errors.Is(err, os.ErrNotExist) {
+		if strings.Contains(err.Error(), "not found") {
 			// Create new chat
 			defaultAssistant := h.registry.GetDefaultAssistant()
-			return models.NewChatState(chatID, defaultAssistant.GetName()), nil
+			return h.repo.CreateChat(ctx, chatID, defaultAssistant.GetName())
 		}
 		return nil, fmt.Errorf("failed to load chat: %w", err)
 	}
 	return state, nil
 }
 
-func (h *Handler) getChat(chatID string) (*models.Chat, error) {
-	state, err := h.getChatState(chatID)
+func (h *Handler) getChat(ctx context.Context, chatID string) (*models.Chat, error) {
+	state, err := h.getChatState(ctx, chatID)
 	if err != nil {
 		return nil, err
 	}
@@ -433,7 +389,7 @@ func (h *Handler) getChat(chatID string) (*models.Chat, error) {
 	return models.NewChat(state, publisher), nil
 }
 
-func (h *Handler) handleCommand(chatID, content string) ([]*models.Message, error) {
+func (h *Handler) handleCommand(ctx context.Context, chatID, content string) ([]*models.Message, error) {
 	parts := strings.Fields(content)
 	if len(parts) == 0 {
 		return nil, fmt.Errorf("empty command")
@@ -444,14 +400,9 @@ func (h *Handler) handleCommand(chatID, content string) ([]*models.Message, erro
 	
 	switch command {
 	case "/clear":
-		chat, err := h.getChat(chatID)
+		err := h.repo.ClearMessages(ctx, chatID)
 		if err != nil {
-			return nil, err
-		}
-		
-		chat.State.Messages = []*models.Message{}
-		if err := chat.State.SaveToDisk(); err != nil {
-			return nil, fmt.Errorf("failed to save chat: %w", err)
+			return nil, fmt.Errorf("failed to clear messages: %w", err)
 		}
 		
 		// Send clear message
@@ -471,15 +422,10 @@ func (h *Handler) handleCommand(chatID, content string) ([]*models.Message, erro
 			return nil, err
 		}
 		
-		chat, err := h.getChat(chatID)
-		if err != nil {
-			return nil, err
-		}
-		
 		assistantName := assistant.GetName()
-		chat.State.Assistant = &assistantName
-		if err := chat.State.SaveToDisk(); err != nil {
-			return nil, fmt.Errorf("failed to save chat: %w", err)
+		err = h.repo.UpdateChatAssistant(ctx, chatID, assistantName)
+		if err != nil {
+			return nil, fmt.Errorf("failed to update chat assistant: %w", err)
 		}
 		
 		// Send update message

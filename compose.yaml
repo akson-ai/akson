@@ -1,5 +1,23 @@
 name: akson
 services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: akson
+      POSTGRES_USER: akson
+      POSTGRES_PASSWORD: akson
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U akson -d akson"]
+      interval: 10s
+      start_interval: 1s
+      start_period: 5s
+      timeout: 5s
+      retries: 3
+
   api:
     build:
       context: ./api
@@ -23,8 +41,17 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
       - ALLOW_ORIGINS=${AKSON_WEB_EXTERNAL_URL}
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=akson
+      - DB_PASSWORD=akson
+      - DB_NAME=akson
+      - DB_SSLMODE=disable
     env_file:
       - ./api/.env
+    depends_on:
+      postgres:
+        condition: service_healthy
 
   web:
     build:
@@ -83,3 +110,6 @@ services:
       - AKSON_API_BASE_URL=http://api:8000
     env_file:
       - ./telegram-bot/.env
+
+volumes:
+  postgres_data:

@@ -10,8 +10,10 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/cenkalti/akson/internal/database"
 	"github.com/cenkalti/akson/internal/handlers"
 	"github.com/cenkalti/akson/internal/registry"
+	"github.com/cenkalti/akson/internal/repository"
 	"github.com/cenkalti/akson/internal/streaming"
 )
 
@@ -20,12 +22,33 @@ func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	slog.SetDefault(logger)
 
+	ctx := context.Background()
+
+	// Initialize database
+	dbConfig := database.LoadConfig()
+	
+	// Run migrations
+	if err := database.RunMigrations(dbConfig, "migrations"); err != nil {
+		log.Fatalf("Failed to run migrations: %v", err)
+	}
+
+	// Connect to database
+	db, err := database.Connect(ctx, dbConfig)
+	if err != nil {
+		log.Fatalf("Failed to connect to database: %v", err)
+	}
+	defer db.Close()
+
+	// Initialize repository
+	repo := repository.NewPostgresRepository(db)
+	defer repo.Close()
+
 	// Initialize components
 	pubsub := streaming.NewPubSub()
 	assistantRegistry := registry.NewRegistry()
 	
 	// Initialize HTTP handlers
-	handler := handlers.NewHandler(pubsub, assistantRegistry)
+	handler := handlers.NewHandler(pubsub, assistantRegistry, repo)
 
 	// Setup HTTP server with custom mux
 	mux := http.NewServeMux()
