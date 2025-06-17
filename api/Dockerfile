@@ -36,6 +36,9 @@ WORKDIR /root/
 # Copy the binary from builder stage
 COPY --from=builder /app/main .
 
+# Copy migrations directory
+COPY --from=builder /app/migrations ./migrations
+
 # Create chats directory
 RUN mkdir -p chats
 
